@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from .api.routes import comments, stories, tracks
+from .api.routes import auth, comments, stories, tracks
 from .core.config import get_settings
 
 
@@ -17,6 +17,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 settings = get_settings()
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
+app.include_router(auth.router)
 app.include_router(tracks.router)
 app.include_router(stories.router)
 app.include_router(comments.router)
