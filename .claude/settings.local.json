@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose:*)",
+      "Bash(python -m pip install:*)",
+      "Bash(alembic init:*)",
+      "Bash(alembic revision:*)",
+      "Bash(docker exec infra-postgres-1 psql -U postgres -d mustory -c \"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\")",
+      "Bash(alembic upgrade:*)",
+      "Bash(docker exec:*)",
+      "Bash(pytest:*)",
+      "Bash(flutter test:*)",
+      "Bash(where:*)",
+      "Bash(powershell -Command \"Get-Command flutter -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Bash(cmd /c \"where flutter\")",
+      "Bash(echo:*)",
+      "Bash(powershell.exe -Command \"flutter --version\")",
+      "Bash(/c/tools/flutter/bin/flutter.bat:*)",
+      "Bash(source ~/.bashrc)",
+      "Bash(flutter --version:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
