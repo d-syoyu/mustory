@@ -9,6 +9,7 @@ from sqlalchemy.pool import StaticPool
 from uuid import UUID
 
 from app.db.base import Base
+from app.db import models
 from app.dependencies.auth import UserContext, get_current_user
 from app.dependencies.database import get_db
 from app.main import app
@@ -49,6 +50,17 @@ def db_session(engine) -> Generator[Session, None, None]:
         future=True,
     )
     session = TestingSessionLocal()
+
+    # Create default test user
+    test_user = models.User(
+        id=UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+        email="test@example.com",
+        display_name="Test User",
+        password_hash="fake_hash",
+    )
+    session.add(test_user)
+    session.commit()
+
     try:
         yield session
     finally:

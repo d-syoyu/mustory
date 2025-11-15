@@ -126,6 +126,76 @@ def list_story_comments(story_id: UUID, db: DbSession) -> list[CommentSchema]:
     )
 
 
+@router.post("/{story_id}/like", status_code=status.HTTP_201_CREATED)
+def like_story(
+    story_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> dict:
+    """Like a story."""
+    story = db.get(models.Story, story_id)
+    if not story:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found.")
+
+    # Check if already liked
+    existing_like = db.scalar(
+        select(models.LikeStory).where(
+            models.LikeStory.user_id == current_user.id,
+            models.LikeStory.story_id == story_id,
+        )
+    )
+    if existing_like:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Story already liked.",
+        )
+
+    # Create like
+    like = models.LikeStory(user_id=current_user.id, story_id=story_id)
+    db.add(like)
+
+    # Increment like_count
+    story.like_count += 1
+
+    db.commit()
+    return {"message": "Story liked successfully."}
+
+
+@router.delete("/{story_id}/like", status_code=status.HTTP_200_OK)
+def unlike_story(
+    story_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> dict:
+    """Unlike a story."""
+    story = db.get(models.Story, story_id)
+    if not story:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found.")
+
+    # Find existing like
+    like = db.scalar(
+        select(models.LikeStory).where(
+            models.LikeStory.user_id == current_user.id,
+            models.LikeStory.story_id == story_id,
+        )
+    )
+    if not like:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Like not found.",
+        )
+
+    # Delete like
+    db.delete(like)
+
+    # Decrement like_count
+    if story.like_count > 0:
+        story.like_count -= 1
+
+    db.commit()
+    return {"message": "Story unliked successfully."}
+
+
 def _map_story(story: models.Story) -> StorySchema:
     return StorySchema(
         id=story.id,

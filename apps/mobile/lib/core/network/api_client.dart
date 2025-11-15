@@ -1,5 +1,21 @@
 import 'package:dio/dio.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import '../auth/auth_controller.dart';
+
+class AuthInterceptor extends Interceptor {
+  final String? Function() getAccessToken;
+
+  AuthInterceptor(this.getAccessToken);
+
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    final token = getAccessToken();
+    if (token != null) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
+    super.onRequest(options, handler);
+  }
+}
 
 final dioProvider = Provider<Dio>(
   (ref) {
@@ -13,10 +29,18 @@ final dioProvider = Provider<Dio>(
         receiveTimeout: const Duration(seconds: 10),
       ),
     );
+
+    // Add auth interceptor
+    dio.interceptors.add(
+      AuthInterceptor(() => ref.read(accessTokenProvider)),
+    );
+
+    // Add logging interceptor
     dio.interceptors.add(LogInterceptor(
       requestBody: true,
       responseBody: true,
     ));
+
     return dio;
   },
 );

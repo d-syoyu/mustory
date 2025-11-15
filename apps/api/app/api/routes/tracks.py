@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import Iterable
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from ...db import models
 from ...dependencies.auth import CurrentUser
@@ -14,6 +15,32 @@ from ...schemas.story import StorySchema
 from ...schemas.tracks import TrackDetailResponse, TrackSchema
 
 router = APIRouter(prefix="/tracks", tags=["tracks"])
+
+
+@router.get("/", response_model=list[TrackSchema])
+def list_tracks(
+    db: DbSession,
+    limit: int = Query(default=20, ge=1, le=100, description="Number of tracks to return"),
+    offset: int = Query(default=0, ge=0, description="Number of tracks to skip"),
+) -> list[TrackSchema]:
+    """
+    List all tracks with pagination.
+
+    - **limit**: Maximum number of tracks to return (1-100, default 20)
+    - **offset**: Number of tracks to skip (default 0)
+    - Returns tracks ordered by newest first
+    """
+    tracks = db.scalars(
+        select(models.Track)
+        .order_by(models.Track.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    ).all()
+
+    return [
+        _map_track(track, _map_story(track.story))
+        for track in tracks
+    ]
 
 
 @router.get("/{track_id}", response_model=TrackDetailResponse)
@@ -98,6 +125,76 @@ def create_track_comment(
     db.commit()
     db.refresh(comment)
     return _map_comment(comment)
+
+
+@router.post("/{track_id}/like", status_code=status.HTTP_201_CREATED)
+def like_track(
+    track_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> dict:
+    """Like a track."""
+    track = db.get(models.Track, track_id)
+    if not track:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Track not found.")
+
+    # Check if already liked
+    existing_like = db.scalar(
+        select(models.LikeTrack).where(
+            models.LikeTrack.user_id == current_user.id,
+            models.LikeTrack.track_id == track_id,
+        )
+    )
+    if existing_like:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Track already liked.",
+        )
+
+    # Create like
+    like = models.LikeTrack(user_id=current_user.id, track_id=track_id)
+    db.add(like)
+
+    # Increment like_count
+    track.like_count += 1
+
+    db.commit()
+    return {"message": "Track liked successfully."}
+
+
+@router.delete("/{track_id}/like", status_code=status.HTTP_200_OK)
+def unlike_track(
+    track_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> dict:
+    """Unlike a track."""
+    track = db.get(models.Track, track_id)
+    if not track:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Track not found.")
+
+    # Find existing like
+    like = db.scalar(
+        select(models.LikeTrack).where(
+            models.LikeTrack.user_id == current_user.id,
+            models.LikeTrack.track_id == track_id,
+        )
+    )
+    if not like:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Like not found.",
+        )
+
+    # Delete like
+    db.delete(like)
+
+    # Decrement like_count
+    if track.like_count > 0:
+        track.like_count -= 1
+
+    db.commit()
+    return {"message": "Track unliked successfully."}
 
 
 def _map_track(track: models.Track, story_schema: StorySchema | None) -> TrackSchema:

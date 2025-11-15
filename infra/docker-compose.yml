@@ -23,8 +23,13 @@ services:
     build:
       context: ..
       dockerfile: infra/dockerfiles/api.Dockerfile
-    env_file:
-      - ../apps/api/.env.example
+    environment:
+      ENVIRONMENT: local
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/mustory
+      REDIS_URL: redis://redis:6379/0
+      SUPABASE_URL: ${SUPABASE_URL:-https://placeholder.supabase.co}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-placeholder}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY:-placeholder}
     depends_on:
       - postgres
       - redis
@@ -35,8 +40,13 @@ services:
     build:
       context: ..
       dockerfile: infra/dockerfiles/worker.Dockerfile
-    env_file:
-      - ../apps/api/.env.example
+    environment:
+      ENVIRONMENT: local
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/mustory
+      REDIS_URL: redis://redis:6379/0
+      SUPABASE_URL: ${SUPABASE_URL:-https://placeholder.supabase.co}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-placeholder}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY:-placeholder}
     depends_on:
       - postgres
       - redis

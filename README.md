@@ -72,11 +72,13 @@ curl -X POST http://localhost:8000/auth/signup \
 ## Completed Features ✅
 
 - [x] Database schema (Track, Story, Comment models)
+- [x] Like tables (LikeTrack, LikeStory, LikeComment)
 - [x] Alembic migrations
 - [x] API endpoints for tracks, stories, comments
+- [x] Like/unlike functionality for tracks, stories, and comments
 - [x] Supabase Auth integration
 - [x] Docker containerization (API, Worker, PostgreSQL, Redis)
-- [x] Comprehensive test suite (10 tests passing)
+- [x] Comprehensive test suite (20 tests passing)
 - [x] Flutter mobile app scaffold
 - [x] Worker skeleton for FFmpeg jobs
 
@@ -84,8 +86,8 @@ curl -X POST http://localhost:8000/auth/signup \
 
 ### Phase 1: Complete MVP Core Features
 1. ~~Setup Supabase authentication~~ ✅
-2. Implement track listing endpoint (`GET /tracks`)
-3. Add like/unlike functionality
+2. ~~Implement track listing endpoint (`GET /tracks`)~~ ✅
+3. ~~Add like/unlike functionality~~ ✅
 4. Integrate Supabase auth with Flutter app
 
 ### Phase 2: Audio & Storage
