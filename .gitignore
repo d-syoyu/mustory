@@ -1,0 +1,30 @@
+# General
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+
+# Python
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+env/
+venv/
+
+# Flutter
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/pubspec.lock
+
+# Coverage / artifacts
+coverage/
+.coverage
+
+# Local env
+*.env

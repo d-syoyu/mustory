@@ -1,0 +1,15 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    invalid_annotation_target: error
+    unnecessary_nullable_for_final_variable_declarations: warning
+
+linter:
+  rules:
+    - prefer_const_constructors
+    - prefer_const_literals_to_create_immutables
+    - prefer_final_locals

@@ -1,0 +1,166 @@
+from __future__ import annotations
+
+from typing import Iterable
+from uuid import UUID
+
+from fastapi import APIRouter, HTTPException, status
+from sqlalchemy import select
+
+from ...db import models
+from ...dependencies.auth import CurrentUser
+from ...dependencies.database import DbSession
+from ...schemas.comments import CommentCreateSchema, CommentSchema
+from ...schemas.story import StoryCreateSchema, StorySchema, StoryUpdateSchema
+
+router = APIRouter(prefix="/stories", tags=["stories"])
+
+
+@router.get("/{story_id}", response_model=StorySchema)
+def get_story(story_id: UUID, db: DbSession) -> StorySchema:
+    story = db.get(models.Story, story_id)
+    if not story:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found.")
+    return _map_story(story)
+
+
+@router.post(
+    "/{story_id}/comments",
+    response_model=CommentSchema,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_story_comment(
+    story_id: UUID,
+    payload: CommentCreateSchema,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> CommentSchema:
+    story = db.get(models.Story, story_id)
+    if not story:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found.")
+    if not payload.body.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty comment.")
+
+    comment = models.Comment(
+        author_user_id=current_user.id,
+        author_display_name=current_user.display_name,
+        body=payload.body.strip(),
+        target_type=models.CommentTargetType.STORY,
+        target_id=story_id,
+    )
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    return _map_comment(comment)
+
+
+@router.put("/{story_id}", response_model=StorySchema)
+def update_story(
+    story_id: UUID,
+    payload: StoryUpdateSchema,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> StorySchema:
+    story = db.get(models.Story, story_id)
+    if not story:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found.")
+    if story.author_user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
+
+    if payload.lead:
+        story.lead = payload.lead
+    if payload.body:
+        story.body = payload.body
+
+    db.add(story)
+    db.commit()
+    db.refresh(story)
+    return _map_story(story)
+
+
+@router.post(
+    "/track/{track_id}",
+    response_model=StorySchema,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_story(
+    track_id: UUID,
+    payload: StoryCreateSchema,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> StorySchema:
+    track = db.get(models.Track, track_id)
+    if not track:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Track not found.")
+    if track.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
+    if track.story:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Story already exists for track.",
+        )
+
+    story = models.Story(
+        track_id=track_id,
+        author_user_id=current_user.id,
+        lead=payload.lead,
+        body=payload.body,
+    )
+    db.add(story)
+    db.commit()
+    db.refresh(story)
+    return _map_story(story)
+
+
+@router.get("/{story_id}/comments", response_model=list[CommentSchema])
+def list_story_comments(story_id: UUID, db: DbSession) -> list[CommentSchema]:
+    return _map_comments(
+        db.scalars(
+            select(models.Comment)
+            .where(
+                models.Comment.target_type == models.CommentTargetType.STORY,
+                models.Comment.target_id == story_id,
+                models.Comment.is_deleted.is_(False),
+            )
+            .order_by(models.Comment.created_at.desc())
+        )
+    )
+
+
+def _map_story(story: models.Story) -> StorySchema:
+    return StorySchema(
+        id=story.id,
+        track_id=story.track_id,
+        author_user_id=story.author_user_id,
+        lead=story.lead,
+        body=story.body,
+        like_count=story.like_count,
+    )
+
+
+def _map_comments(rows: Iterable[models.Comment]) -> list[CommentSchema]:
+    return [
+        CommentSchema(
+            id=comment.id,
+            author_user_id=comment.author_user_id,
+            author_display_name=comment.author_display_name,
+            body=comment.body,
+            created_at=comment.created_at,
+            target_type=comment.target_type.value,
+            target_id=comment.target_id,
+            like_count=comment.like_count,
+        )
+        for comment in rows
+    ]
+
+
+def _map_comment(comment: models.Comment) -> CommentSchema:
+    return CommentSchema(
+        id=comment.id,
+        author_user_id=comment.author_user_id,
+        author_display_name=comment.author_display_name,
+        body=comment.body,
+        created_at=comment.created_at,
+        target_type=comment.target_type.value,
+        target_id=comment.target_id,
+        like_count=comment.like_count,
+    )

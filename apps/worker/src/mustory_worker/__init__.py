@@ -1,0 +1,1 @@
+"""Mustory async worker."""
