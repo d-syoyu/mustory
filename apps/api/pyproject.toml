@@ -39,4 +39,10 @@ strict = true
 
 [tool.pytest.ini_options]
 addopts = "-q"
-testpaths = ["apps/api/tests"]
+testpaths = ["tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.hatch.build.targets.sdist]
+include = ["app", "README.md", "pyproject.toml"]
