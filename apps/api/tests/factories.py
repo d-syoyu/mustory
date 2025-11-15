@@ -55,10 +55,11 @@ def create_comment(
     target_type: models.CommentTargetType,
     body: str,
     author_display_name: str = "Listener",
+    author_user_id: UUID | None = None,
 ) -> models.Comment:
     comment = models.Comment(
         id=uuid4(),
-        author_user_id=DEFAULT_USER_ID,
+        author_user_id=author_user_id or DEFAULT_USER_ID,
         author_display_name=author_display_name,
         body=body,
         target_type=target_type.value,
