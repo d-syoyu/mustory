@@ -248,6 +248,36 @@ Future<void> signOut() async {
 - このUUIDを`tracks`, `stories`, `comments` テーブルの `user_id` や `author_user_id` として使用
 - 関連付けは自動的 - 追加設定不要！
 
+## Row Level Security (RLS) の設定
+
+**重要**: RLSを有効化しないと、APIキーを持つ誰でもデータベースに直接アクセスできてしまいます。
+
+### RLSポリシーを適用
+
+1. Supabaseダッシュボードで **SQL Editor** を開く
+2. `apps/api/supabase_rls_policies.sql` ファイルの内容をコピー
+3. SQLエディタに貼り付けて実行
+
+これにより以下のポリシーが適用されます:
+
+**Tracks（トラック）**:
+- 誰でも読み取り可能
+- 認証済みユーザーは自分のトラックを作成・更新・削除可能
+
+**Stories（物語）**:
+- 誰でも読み取り可能
+- 認証済みユーザーは自分の物語を作成・更新・削除可能
+
+**Comments（コメント）**:
+- 誰でも読み取り可能
+- 認証済みユーザーはコメント作成可能
+- ユーザーは自分のコメントのみ削除可能
+
+### RLS有効化を確認
+
+Supabaseダッシュボードで **Table Editor** → 各テーブル → **RLS** タブを確認。
+"RLS enabled" と表示されていればOKです。
+
 ## 高度な機能
 
 ### メール確認を有効化

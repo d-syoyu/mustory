@@ -202,6 +202,36 @@ Visit http://localhost:8000/docs and test:
    );
    ```
 
+## Row Level Security (RLS) Setup
+
+**Important**: Without RLS enabled, anyone with your API keys can directly access your database.
+
+### Apply RLS Policies
+
+1. Open **SQL Editor** in Supabase Dashboard
+2. Copy the contents of `apps/api/supabase_rls_policies.sql`
+3. Paste and execute in the SQL Editor
+
+This applies the following policies:
+
+**Tracks**:
+- Public read access
+- Authenticated users can create/update/delete their own tracks
+
+**Stories**:
+- Public read access
+- Authenticated users can create/update/delete their own stories
+
+**Comments**:
+- Public read access
+- Authenticated users can create comments
+- Users can only delete their own comments
+
+### Verify RLS is Enabled
+
+In Supabase Dashboard, go to **Table Editor** → select table → **RLS** tab.
+You should see "RLS enabled" for all tables.
+
 ## Advanced Features
 
 ### Email Confirmation
