@@ -10,7 +10,7 @@ from uuid import UUID
 
 from app.db.base import Base
 from app.db import models
-from app.dependencies.auth import UserContext, get_current_user
+from app.dependencies.supabase_auth import UserContext, get_current_user
 from app.dependencies.database import get_db
 from app.main import app
 

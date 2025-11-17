@@ -1,0 +1,23 @@
+# Worker Dockerfile with FFmpeg for audio processing
+FROM python:3.11-slim
+
+# Install FFmpeg and system dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy project files
+COPY pyproject.toml ./
+COPY app ./app
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -e .
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+
+# Run RQ worker
+CMD ["rq", "worker", "track_processing", "--url", "redis://redis:6379/0"]

@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from ...db import models
-from ...dependencies.auth import CurrentUser
+from ...dependencies.supabase_auth import CurrentUser
 from ...dependencies.database import DbSession
 
 router = APIRouter(prefix="/comments", tags=["comments"])

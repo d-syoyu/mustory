@@ -39,6 +39,13 @@ class CommentTargetType(str, Enum):
     STORY = "story"
 
 
+class TrackProcessingStatus(str, Enum):
+    PENDING = "pending"  # Upload started, waiting for file
+    PROCESSING = "processing"  # FFmpeg conversion in progress
+    COMPLETED = "completed"  # Ready to play
+    FAILED = "failed"  # Processing failed
+
+
 class Track(Base):
     __tablename__ = "tracks"
     id: Mapped[uuid.UUID] = mapped_column(
@@ -49,6 +56,14 @@ class Track(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
     artwork_url: Mapped[str] = mapped_column(String(2048))
     hls_url: Mapped[str] = mapped_column(String(2048))
+    # Upload and processing fields
+    original_audio_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    processing_status: Mapped[TrackProcessingStatus] = mapped_column(
+        SqlEnum(TrackProcessingStatus), default=TrackProcessingStatus.PENDING
+    )
+    processing_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Metadata
     like_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow
@@ -99,11 +114,15 @@ class Comment(Base):
         SqlEnum(CommentTargetType), default=CommentTargetType.TRACK
     )
     target_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    parent_comment_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow
     )
     like_count: Mapped[int] = mapped_column(Integer, default=0)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+    reply_count: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class LikeTrack(Base):

@@ -29,6 +29,31 @@ class Settings(BaseModel):
         default="",
         description="Supabase service role key (for admin operations)",
     )
+    # Storage configuration (Cloudflare R2 or S3 compatible)
+    storage_endpoint: str = Field(
+        default="",
+        description="S3-compatible storage endpoint URL",
+    )
+    storage_access_key: str = Field(
+        default="",
+        description="Storage access key",
+    )
+    storage_secret_key: str = Field(
+        default="",
+        description="Storage secret key",
+    )
+    storage_bucket: str = Field(
+        default="mustory-audio",
+        description="Storage bucket name",
+    )
+    storage_region: str = Field(
+        default="auto",
+        description="Storage region",
+    )
+    storage_public_url: str = Field(
+        default="",
+        description="Public URL base for accessing uploaded files",
+    )
 
 
 @lru_cache
@@ -43,4 +68,10 @@ def get_settings() -> Settings:
         supabase_service_key=os.getenv(
             "SUPABASE_SERVICE_KEY", Settings().supabase_service_key
         ),
+        storage_endpoint=os.getenv("STORAGE_ENDPOINT", Settings().storage_endpoint),
+        storage_access_key=os.getenv("STORAGE_ACCESS_KEY", Settings().storage_access_key),
+        storage_secret_key=os.getenv("STORAGE_SECRET_KEY", Settings().storage_secret_key),
+        storage_bucket=os.getenv("STORAGE_BUCKET", Settings().storage_bucket),
+        storage_region=os.getenv("STORAGE_REGION", Settings().storage_region),
+        storage_public_url=os.getenv("STORAGE_PUBLIC_URL", Settings().storage_public_url),
     )

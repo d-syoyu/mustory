@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mustory_mobile/features/tracks/domain/track.dart';
 import '../../../../core/audio/audio_player_controller.dart';
 
@@ -35,27 +36,31 @@ class TrackCard extends ConsumerWidget {
               aspectRatio: 16 / 9,
               child: Stack(
                 children: [
-                  Image.network(
-                    track.artworkUrl,
+                  CachedNetworkImage(
+                    imageUrl: track.artworkUrl,
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: double.infinity,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[300],
-                        child: const Icon(
-                          Icons.music_note,
-                          size: 64,
-                          color: Colors.grey,
-                        ),
-                      );
-                    },
+                    placeholder: (context, url) => Container(
+                      color: Colors.grey[800],
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey[800],
+                      child: const Icon(
+                        Icons.music_note,
+                        size: 64,
+                        color: Colors.grey,
+                      ),
+                    ),
                   ),
                   // Play/Pause Button Overlay
                   Center(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(
@@ -121,10 +126,42 @@ class TrackCard extends ConsumerWidget {
                   // Stats Row
                   Row(
                     children: [
+                      // Views (play count) - placeholder for now
+                      Icon(
+                        Icons.remove_red_eye,
+                        size: 14,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '0', // TODO: Add plays_count to Track model
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Comments - placeholder for now
+                      Icon(
+                        Icons.comment,
+                        size: 14,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '0', // TODO: Add comments_count to Track model
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                      ),
+                      const SizedBox(width: 12),
+
                       // Like Count
                       Icon(
                         Icons.favorite,
-                        size: 18,
+                        size: 14,
                         color: Colors.grey[600],
                       ),
                       const SizedBox(width: 4),
@@ -132,24 +169,17 @@ class TrackCard extends ConsumerWidget {
                         '${track.likeCount}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Colors.grey[600],
+                              fontSize: 12,
                             ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 12),
 
                       // Story Indicator
-                      if (track.hasStory == true) ...[
+                      if (track.hasStory) ...[
                         Icon(
-                          Icons.description,
-                          size: 18,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'ストーリーあり',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey[600],
-                                  ),
+                          Icons.book,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ],
 
@@ -157,9 +187,13 @@ class TrackCard extends ConsumerWidget {
 
                       // Like Button
                       IconButton(
-                        icon: const Icon(Icons.favorite_border),
+                        icon: Icon(
+                          track.isLiked ? Icons.favorite : Icons.favorite_border,
+                        ),
                         onPressed: onLike,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: track.isLiked
+                            ? Colors.red
+                            : Theme.of(context).colorScheme.primary,
                       ),
                     ],
                   ),

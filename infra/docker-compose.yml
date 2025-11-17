@@ -25,11 +25,17 @@ services:
       dockerfile: infra/dockerfiles/api.Dockerfile
     environment:
       ENVIRONMENT: local
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/mustory
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:postgres@postgres:5432/mustory}
       REDIS_URL: redis://redis:6379/0
       SUPABASE_URL: ${SUPABASE_URL:-https://placeholder.supabase.co}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-placeholder}
       SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY:-placeholder}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT:-}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-mustory-audio}
+      STORAGE_REGION: ${STORAGE_REGION:-auto}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-}
     depends_on:
       - postgres
       - redis
@@ -42,11 +48,17 @@ services:
       dockerfile: infra/dockerfiles/worker.Dockerfile
     environment:
       ENVIRONMENT: local
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/mustory
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:postgres@postgres:5432/mustory}
       REDIS_URL: redis://redis:6379/0
       SUPABASE_URL: ${SUPABASE_URL:-https://placeholder.supabase.co}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-placeholder}
       SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY:-placeholder}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT:-}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-mustory-audio}
+      STORAGE_REGION: ${STORAGE_REGION:-auto}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-}
     depends_on:
       - postgres
       - redis

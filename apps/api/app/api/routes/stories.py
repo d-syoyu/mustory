@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from ...db import models
-from ...dependencies.auth import CurrentUser
+from ...dependencies.supabase_auth import CurrentUser, OptionalCurrentUser
 from ...dependencies.database import DbSession
 from ...schemas.comments import CommentCreateSchema, CommentSchema
 from ...schemas.story import StoryCreateSchema, StorySchema, StoryUpdateSchema
@@ -40,17 +40,38 @@ def create_story_comment(
     if not payload.body.strip():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty comment.")
 
+    # If this is a reply to another comment, validate parent comment exists
+    if payload.parent_comment_id:
+        parent_comment = db.get(models.Comment, payload.parent_comment_id)
+        if not parent_comment or parent_comment.is_deleted:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Parent comment not found.",
+            )
+        # Verify parent comment is for the same story
+        if parent_comment.target_type != models.CommentTargetType.STORY or parent_comment.target_id != story_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Parent comment does not belong to this story.",
+            )
+
     comment = models.Comment(
         author_user_id=current_user.id,
         author_display_name=current_user.display_name,
         body=payload.body.strip(),
         target_type=models.CommentTargetType.STORY,
         target_id=story_id,
+        parent_comment_id=payload.parent_comment_id,
     )
     db.add(comment)
+
+    # Increment parent comment's reply_count if this is a reply
+    if payload.parent_comment_id:
+        parent_comment.reply_count += 1
+
     db.commit()
     db.refresh(comment)
-    return _map_comment(comment)
+    return _map_comment(comment, current_user.id, db)
 
 
 @router.put("/{story_id}", response_model=StorySchema)
@@ -112,8 +133,12 @@ def create_story(
 
 
 @router.get("/{story_id}/comments", response_model=list[CommentSchema])
-def list_story_comments(story_id: UUID, db: DbSession) -> list[CommentSchema]:
-    return _map_comments(
+def list_story_comments(
+    story_id: UUID,
+    db: DbSession,
+    current_user: OptionalCurrentUser,
+) -> list[CommentSchema]:
+    comments_rows = list(
         db.scalars(
             select(models.Comment)
             .where(
@@ -124,6 +149,7 @@ def list_story_comments(story_id: UUID, db: DbSession) -> list[CommentSchema]:
             .order_by(models.Comment.created_at.desc())
         )
     )
+    return _map_comments(comments_rows, current_user, db)
 
 
 @router.post("/{story_id}/like", status_code=status.HTTP_201_CREATED)
@@ -207,23 +233,52 @@ def _map_story(story: models.Story) -> StorySchema:
     )
 
 
-def _map_comments(rows: Iterable[models.Comment]) -> list[CommentSchema]:
+def _map_comments(
+    rows: Iterable[models.Comment],
+    current_user: UUID | None,
+    db: DbSession,
+) -> list[CommentSchema]:
+    comments = list(rows)
+    if not comments:
+        return []
+
+    # Batch query for user's liked comments to avoid N+1 problem
+    liked_comment_ids: set[UUID] = set()
+    if current_user:
+        comment_ids = [comment.id for comment in comments]
+        if comment_ids:
+            liked_comments = db.scalars(
+                select(models.LikeComment.comment_id).where(
+                    models.LikeComment.user_id == current_user,
+                    models.LikeComment.comment_id.in_(comment_ids),
+                )
+            ).all()
+            liked_comment_ids = set(liked_comments)
+
     return [
-        CommentSchema(
-            id=comment.id,
-            author_user_id=comment.author_user_id,
-            author_display_name=comment.author_display_name,
-            body=comment.body,
-            created_at=comment.created_at,
-            target_type=comment.target_type.value,
-            target_id=comment.target_id,
-            like_count=comment.like_count,
-        )
-        for comment in rows
+        _map_comment(comment, current_user, db, comment.id in liked_comment_ids)
+        for comment in comments
     ]
 
 
-def _map_comment(comment: models.Comment) -> CommentSchema:
+def _map_comment(
+    comment: models.Comment,
+    current_user: UUID | None,
+    db: DbSession,
+    is_liked: bool | None = None,
+) -> CommentSchema:
+    # If is_liked is not provided (single comment mapping), check directly
+    if is_liked is None:
+        is_liked = False
+        if current_user:
+            existing_like = db.scalar(
+                select(models.LikeComment).where(
+                    models.LikeComment.user_id == current_user,
+                    models.LikeComment.comment_id == comment.id,
+                )
+            )
+            is_liked = existing_like is not None
+
     return CommentSchema(
         id=comment.id,
         author_user_id=comment.author_user_id,
@@ -232,5 +287,8 @@ def _map_comment(comment: models.Comment) -> CommentSchema:
         created_at=comment.created_at,
         target_type=comment.target_type.value,
         target_id=comment.target_id,
+        parent_comment_id=comment.parent_comment_id,
         like_count=comment.like_count,
+        reply_count=comment.reply_count,
+        is_liked=is_liked,
     )

@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/audio/audio_player_controller.dart';
 
 class MiniPlayer extends ConsumerWidget {
   const MiniPlayer({super.key});
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$minutes:$seconds';
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -57,19 +51,22 @@ class MiniPlayer extends ConsumerWidget {
                 // Artwork thumbnail
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
-                  child: Image.network(
-                    currentTrack.artworkUrl,
+                  child: CachedNetworkImage(
+                    imageUrl: currentTrack.artworkUrl,
                     width: 48,
                     height: 48,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 48,
-                        height: 48,
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.music_note, size: 24),
-                      );
-                    },
+                    placeholder: (context, url) => Container(
+                      width: 48,
+                      height: 48,
+                      color: Colors.grey[800],
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      width: 48,
+                      height: 48,
+                      color: Colors.grey[800],
+                      child: const Icon(Icons.music_note, size: 24),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -100,13 +97,6 @@ class MiniPlayer extends ConsumerWidget {
                   ),
                 ),
 
-                // Time display
-                Text(
-                  '${_formatDuration(audioState.position)} / ${_formatDuration(audioState.duration)}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(width: 12),
-
                 // Play/Pause button
                 IconButton(
                   icon: audioState.isLoading
@@ -126,14 +116,11 @@ class MiniPlayer extends ConsumerWidget {
                   },
                 ),
 
-                // Stop button
+                // Menu button
                 IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () async {
-                    final controller = ref.read(
-                      audioPlayerControllerProvider.notifier,
-                    );
-                    await controller.stop();
+                  icon: const Icon(Icons.more_vert),
+                  onPressed: () {
+                    // TODO: Show menu (add to playlist, favorite, etc.)
                   },
                 ),
               ],

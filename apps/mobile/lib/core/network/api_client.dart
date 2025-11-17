@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../auth/auth_controller.dart';
 
 class AuthInterceptor extends Interceptor {
@@ -21,12 +22,9 @@ final dioProvider = Provider<Dio>(
   (ref) {
     final dio = Dio(
       BaseOptions(
-        baseUrl: const String.fromEnvironment(
-          'MUSTORY_API_BASE_URL',
-          defaultValue: 'http://localhost:8000',
-        ),
-        connectTimeout: const Duration(seconds: 5),
-        receiveTimeout: const Duration(seconds: 10),
+        baseUrl: dotenv.env['MUSTORY_API_BASE_URL'] ?? 'http://localhost:8000',
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 30),
       ),
     );
 

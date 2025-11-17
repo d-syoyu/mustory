@@ -77,9 +77,16 @@ class TracksController extends StateNotifier<TracksState> {
         );
       }
     } catch (e) {
+      String errorMessage = 'トラックの読み込みに失敗しました';
+      if (e.toString().contains('timeout')) {
+        errorMessage = 'サーバーへの接続がタイムアウトしました\nネットワーク接続を確認してください';
+      } else if (e.toString().contains('Failed to load tracks')) {
+        errorMessage = 'トラックの取得中にエラーが発生しました';
+      }
+
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        error: errorMessage,
       );
     }
   }
@@ -100,7 +107,10 @@ class TracksController extends StateNotifier<TracksState> {
       // Update local state
       final updatedTracks = state.tracks.map((track) {
         if (track.id == trackId) {
-          return track.copyWith(likeCount: track.likeCount + 1);
+          return track.copyWith(
+            likeCount: track.likeCount + 1,
+            isLiked: true,
+          );
         }
         return track;
       }).toList();
@@ -119,7 +129,10 @@ class TracksController extends StateNotifier<TracksState> {
       // Update local state
       final updatedTracks = state.tracks.map((track) {
         if (track.id == trackId) {
-          return track.copyWith(likeCount: track.likeCount - 1);
+          return track.copyWith(
+            likeCount: track.likeCount - 1,
+            isLiked: false,
+          );
         }
         return track;
       }).toList();

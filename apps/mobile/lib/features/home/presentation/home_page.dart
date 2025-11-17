@@ -17,18 +17,6 @@ class HomePage extends HookConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mustory'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'ログアウト',
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).signOut();
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -160,14 +148,19 @@ class HomePage extends HookConsumerWidget {
                                 context.go('/tracks/${track.id}');
                               },
                               onLike: () {
-                                ref
-                                    .read(tracksControllerProvider.notifier)
-                                    .likeTrack(track.id);
+                                final notifier = ref.read(tracksControllerProvider.notifier);
+                                if (track.isLiked) {
+                                  notifier.unlikeTrack(track.id);
+                                } else {
+                                  notifier.likeTrack(track.id);
+                                }
                               },
                             );
                           } else if (tracksState.hasMore) {
-                            // Load more trigger
-                            ref.read(tracksControllerProvider.notifier).loadMore();
+                            // Load more trigger - schedule after build
+                            Future.microtask(() {
+                              ref.read(tracksControllerProvider.notifier).loadMore();
+                            });
                             return const Padding(
                               padding: EdgeInsets.all(16.0),
                               child: Center(
