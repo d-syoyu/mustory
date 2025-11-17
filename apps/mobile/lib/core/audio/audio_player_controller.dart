@@ -114,3 +114,7 @@ final audioPlayerControllerProvider =
     StateNotifierProvider<AudioPlayerController, AudioPlayerState>((ref) {
   return AudioPlayerController();
 });
+
+final audioPlayerStateProvider = Provider<AudioPlayerState>((ref) {
+  return ref.watch(audioPlayerControllerProvider);
+});

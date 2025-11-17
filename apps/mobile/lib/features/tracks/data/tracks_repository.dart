@@ -13,7 +13,7 @@ class TracksRepository {
     int offset = 0,
   }) async {
     try {
-      final response = await _dio.get(
+      final response = await _dio.get<List<dynamic>>(
         '/tracks/',
         queryParameters: {
           'limit': limit,
@@ -35,7 +35,7 @@ class TracksRepository {
 
   Future<TrackDetail> getTrackDetail(String id) async {
     try {
-      final response = await _dio.get('/tracks/$id');
+      final response = await _dio.get<Map<String, dynamic>>('/tracks/$id');
       return TrackDetail.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception('Failed to load track detail: ${e.message}');
@@ -44,7 +44,7 @@ class TracksRepository {
 
   Future<List<Comment>> getTrackComments(String trackId) async {
     try {
-      final response = await _dio.get('/tracks/$trackId/comments');
+      final response = await _dio.get<List<dynamic>>('/tracks/$trackId/comments');
       if (response.data is List) {
         return (response.data as List)
             .map((json) => Comment.fromJson(json as Map<String, dynamic>))

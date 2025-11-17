@@ -174,3 +174,11 @@ final accessTokenProvider = Provider<String?>((ref) {
     orElse: () => null,
   );
 });
+
+final currentUserIdProvider = Provider<String?>((ref) {
+  final authState = ref.watch(authControllerProvider);
+  return authState.maybeWhen(
+    authenticated: (userId, _, __, ___) => userId,
+    orElse: () => null,
+  );
+});
