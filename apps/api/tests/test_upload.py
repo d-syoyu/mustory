@@ -40,6 +40,7 @@ def test_upload_init_creates_track_and_presigned_urls(
         "file_extension": "mp3",
         "file_size": 1024,
         "artwork_extension": "png",
+        "tags": ["#ピアノ", " chill "],
     }
 
     response = client.post("/tracks/upload/init", json=payload)
@@ -55,6 +56,7 @@ def test_upload_init_creates_track_and_presigned_urls(
     assert track.processing_status == models.TrackProcessingStatus.PENDING
     assert track.original_audio_url.startswith("https://cdn.example.com/tracks/")
     assert track.artwork_url.endswith(".png")
+    assert track.tags == ["#ピアノ", "chill"]
 
 
 def test_upload_complete_enqueues_job_for_owner(

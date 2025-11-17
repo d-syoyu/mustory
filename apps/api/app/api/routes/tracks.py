@@ -23,6 +23,7 @@ from ...schemas.tracks import (
     TrackProcessingStatusResponse,
 )
 from ...services.queue import enqueue_track_processing
+from ...services.recommendations import RecommendationService
 
 router = APIRouter(prefix="/tracks", tags=["tracks"])
 
@@ -66,6 +67,212 @@ def list_tracks(
         _map_track_with_like_status(track, _map_story(track.story), track.id in liked_track_ids)
         for track in tracks
     ]
+
+
+@router.get("/liked", response_model=list[TrackSchema])
+def list_liked_tracks(
+    db: DbSession,
+    current_user: CurrentUser,
+    limit: int = Query(default=20, ge=1, le=100, description="Number of tracks to return"),
+    offset: int = Query(default=0, ge=0, description="Number of tracks to skip"),
+) -> list[TrackSchema]:
+    """
+    List tracks liked by the current user.
+
+    - **limit**: Maximum number of tracks to return (1-100, default 20)
+    - **offset**: Number of tracks to skip (default 0)
+    - Returns liked tracks ordered by most recently liked first
+    """
+    # Get liked track IDs for the current user
+    liked_track_ids = db.scalars(
+        select(models.LikeTrack.track_id)
+        .where(models.LikeTrack.user_id == current_user.id)
+        .order_by(models.LikeTrack.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    ).all()
+
+    if not liked_track_ids:
+        return []
+
+    # Fetch tracks with their stories
+    tracks = db.scalars(
+        select(models.Track)
+        .options(selectinload(models.Track.story))
+        .where(models.Track.id.in_(liked_track_ids))
+    ).all()
+
+    # Preserve the order from liked_track_ids
+    track_dict = {track.id: track for track in tracks}
+    ordered_tracks = [track_dict[track_id] for track_id in liked_track_ids if track_id in track_dict]
+
+    # All tracks in this endpoint are liked by the current user
+    return [
+        _map_track_with_like_status(track, _map_story(track.story), True)
+        for track in ordered_tracks
+    ]
+
+
+@router.get("/recommendations", response_model=list[TrackSchema])
+def get_recommended_tracks(
+    db: DbSession,
+    current_user: OptionalCurrentUser,
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=50,
+        description="Number of personalized tracks to return",
+    ),
+) -> list[TrackSchema]:
+    """
+    Return ranked tracks that blend global trending signals with personalized affinity.
+
+    When the listener is not authenticated, this falls back to global popularity/recency.
+    """
+    recommender = RecommendationService(db)
+    recommended_tracks = recommender.recommend_tracks(
+        user_id=current_user,
+        limit=limit,
+    )
+    if not recommended_tracks:
+        return []
+
+    liked_track_ids: set[UUID] = set()
+    if current_user:
+        track_ids = [track.id for track in recommended_tracks]
+        if track_ids:
+            liked_track_ids = set(
+                db.scalars(
+                    select(models.LikeTrack.track_id).where(
+                        models.LikeTrack.user_id == current_user,
+                        models.LikeTrack.track_id.in_(track_ids),
+                    )
+                ).all()
+            )
+
+    return [
+        _map_track_with_like_status(
+            track,
+            _map_story(track.story),
+            track.id in liked_track_ids,
+        )
+        for track in recommended_tracks
+    ]
+
+
+@router.get("/my", response_model=list[TrackSchema])
+def list_my_tracks(
+    db: DbSession,
+    current_user: CurrentUser,
+    limit: int = Query(default=20, ge=1, le=100, description="Number of tracks to return"),
+    offset: int = Query(default=0, ge=0, description="Number of tracks to skip"),
+) -> list[TrackSchema]:
+    """
+    List tracks uploaded by the current user.
+
+    - **limit**: Maximum number of tracks to return (1-100, default 20)
+    - **offset**: Number of tracks to skip (default 0)
+    - Returns user's tracks ordered by newest first
+    """
+    tracks = db.scalars(
+        select(models.Track)
+        .options(selectinload(models.Track.story))
+        .where(models.Track.user_id == current_user.id)
+        .order_by(models.Track.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    ).all()
+
+    # Check which tracks the user has liked
+    liked_track_ids: set[UUID] = set()
+    if tracks:
+        track_ids = [track.id for track in tracks]
+        liked_tracks = db.scalars(
+            select(models.LikeTrack.track_id).where(
+                models.LikeTrack.user_id == current_user.id,
+                models.LikeTrack.track_id.in_(track_ids),
+            )
+        ).all()
+        liked_track_ids = set(liked_tracks)
+
+    return [
+        _map_track_with_like_status(track, _map_story(track.story), track.id in liked_track_ids)
+        for track in tracks
+    ]
+
+
+@router.patch("/{track_id}", response_model=TrackSchema)
+def update_track(
+    track_id: UUID,
+    title: str | None = None,
+    artist_name: str | None = None,
+    story_lead: str | None = None,
+    story_body: str | None = None,
+    db: DbSession = None,
+    current_user: CurrentUser = None,
+) -> TrackSchema:
+    """Update track information (title, artist name, and/or story)."""
+    track = db.get(models.Track, track_id)
+    if not track:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Track not found.")
+
+    # Check if the current user is the owner of the track
+    if track.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to update this track.",
+        )
+
+    # Update track fields if provided
+    if title is not None and title.strip():
+        track.title = title.strip()
+    if artist_name is not None and artist_name.strip():
+        track.artist_name = artist_name.strip()
+
+    # Update or create story if lead or body is provided
+    if story_lead is not None or story_body is not None:
+        if track.story:
+            # Update existing story
+            if story_lead is not None:
+                track.story.lead = story_lead
+            if story_body is not None:
+                track.story.body = story_body
+        else:
+            # Create new story
+            story = models.Story(
+                track_id=track.id,
+                lead=story_lead or "",
+                body=story_body or "",
+            )
+            db.add(story)
+
+    db.commit()
+    db.refresh(track)
+
+    story_schema = _map_story(track.story) if track.story else None
+    return _map_track(track, story_schema, current_user.id, db)
+
+
+@router.delete("/{track_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
+def delete_track(
+    track_id: UUID,
+    db: DbSession = None,
+    current_user: CurrentUser = None,
+):
+    """Delete a track."""
+    track = db.get(models.Track, track_id)
+    if not track:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Track not found.")
+
+    # Check if the current user is the owner of the track
+    if track.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to delete this track.",
+        )
+
+    db.delete(track)
+    db.commit()
 
 
 @router.get("/{track_id}", response_model=TrackDetailResponse)
@@ -269,7 +476,15 @@ def _map_track_with_like_status(
         artwork_url=track.artwork_url,
         hls_url=track.hls_url,
         like_count=track.like_count,
+        view_count=track.view_count,
         is_liked=is_liked,
+        duration_seconds=track.duration_seconds,
+        bpm=track.bpm,
+        loudness_lufs=track.loudness_lufs,
+        mood_valence=track.mood_valence,
+        mood_energy=track.mood_energy,
+        has_vocals=track.has_vocals,
+        tags=track.tags or [],
         story=story_schema,
     )
 
@@ -300,7 +515,15 @@ def _map_track(
         artwork_url=track.artwork_url,
         hls_url=track.hls_url,
         like_count=track.like_count,
+        view_count=track.view_count,
         is_liked=is_liked,
+        duration_seconds=track.duration_seconds,
+        bpm=track.bpm,
+        loudness_lufs=track.loudness_lufs,
+        mood_valence=track.mood_valence,
+        mood_energy=track.mood_energy,
+        has_vocals=track.has_vocals,
+        tags=track.tags or [],
         story=story_schema,
     )
 
@@ -404,10 +627,21 @@ def init_track_upload(
         artwork_url="",  # Will be updated after upload
         hls_url="",  # Will be set after FFmpeg processing
         processing_status=models.TrackProcessingStatus.PENDING,
+        tags=[tag.strip() for tag in (payload.tags or []) if tag.strip()],
     )
     db.add(track)
     db.commit()
     db.refresh(track)
+
+    # Create story if lead or body is provided
+    if payload.story_lead or payload.story_body:
+        story = models.Story(
+            track_id=track.id,
+            lead=payload.story_lead or "",
+            body=payload.story_body or "",
+        )
+        db.add(story)
+        db.commit()
 
     # Generate S3 object keys
     audio_key = f"tracks/{track.id}/original.{payload.file_extension}"

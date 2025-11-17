@@ -131,12 +131,7 @@ class MyPage extends HookConsumerWidget {
                       elevation: 2,
                       child: InkWell(
                         onTap: () {
-                          // TODO: Navigate to my tracks
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('マイトラック機能は準備中です'),
-                            ),
-                          );
+                          context.go('/my-tracks');
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(20),
@@ -191,12 +186,7 @@ class MyPage extends HookConsumerWidget {
                       elevation: 2,
                       child: InkWell(
                         onTap: () {
-                          // TODO: Navigate to liked tracks
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('いいねした曲機能は準備中です'),
-                            ),
-                          );
+                          context.go('/liked-tracks');
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(20),

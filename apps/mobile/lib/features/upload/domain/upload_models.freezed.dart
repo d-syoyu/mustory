@@ -21,6 +21,8 @@ mixin _$TrackUploadInitRequest {
   String get fileExtension => throw _privateConstructorUsedError;
   int get fileSize => throw _privateConstructorUsedError;
   String? get artworkExtension => throw _privateConstructorUsedError;
+  String? get storyLead => throw _privateConstructorUsedError;
+  String? get storyBody => throw _privateConstructorUsedError;
 
   /// Create a copy of TrackUploadInitRequest
   /// with the given fields replaced by the non-null parameter values.
@@ -40,7 +42,9 @@ abstract class $TrackUploadInitRequestCopyWith<$Res> {
       String artistName,
       String fileExtension,
       int fileSize,
-      String? artworkExtension});
+      String? artworkExtension,
+      String? storyLead,
+      String? storyBody});
 }
 
 /// @nodoc
@@ -64,6 +68,8 @@ class _$TrackUploadInitRequestCopyWithImpl<$Res,
     Object? fileExtension = null,
     Object? fileSize = null,
     Object? artworkExtension = freezed,
+    Object? storyLead = freezed,
+    Object? storyBody = freezed,
   }) {
     return _then(_value.copyWith(
       title: null == title
@@ -86,6 +92,14 @@ class _$TrackUploadInitRequestCopyWithImpl<$Res,
           ? _value.artworkExtension
           : artworkExtension // ignore: cast_nullable_to_non_nullable
               as String?,
+      storyLead: freezed == storyLead
+          ? _value.storyLead
+          : storyLead // ignore: cast_nullable_to_non_nullable
+              as String?,
+      storyBody: freezed == storyBody
+          ? _value.storyBody
+          : storyBody // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -104,7 +118,9 @@ abstract class _$$TrackUploadInitRequestImplCopyWith<$Res>
       String artistName,
       String fileExtension,
       int fileSize,
-      String? artworkExtension});
+      String? artworkExtension,
+      String? storyLead,
+      String? storyBody});
 }
 
 /// @nodoc
@@ -127,6 +143,8 @@ class __$$TrackUploadInitRequestImplCopyWithImpl<$Res>
     Object? fileExtension = null,
     Object? fileSize = null,
     Object? artworkExtension = freezed,
+    Object? storyLead = freezed,
+    Object? storyBody = freezed,
   }) {
     return _then(_$TrackUploadInitRequestImpl(
       title: null == title
@@ -149,6 +167,14 @@ class __$$TrackUploadInitRequestImplCopyWithImpl<$Res>
           ? _value.artworkExtension
           : artworkExtension // ignore: cast_nullable_to_non_nullable
               as String?,
+      storyLead: freezed == storyLead
+          ? _value.storyLead
+          : storyLead // ignore: cast_nullable_to_non_nullable
+              as String?,
+      storyBody: freezed == storyBody
+          ? _value.storyBody
+          : storyBody // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -161,7 +187,9 @@ class _$TrackUploadInitRequestImpl extends _TrackUploadInitRequest {
       required this.artistName,
       required this.fileExtension,
       required this.fileSize,
-      this.artworkExtension})
+      this.artworkExtension,
+      this.storyLead,
+      this.storyBody})
       : super._();
 
   @override
@@ -174,10 +202,14 @@ class _$TrackUploadInitRequestImpl extends _TrackUploadInitRequest {
   final int fileSize;
   @override
   final String? artworkExtension;
+  @override
+  final String? storyLead;
+  @override
+  final String? storyBody;
 
   @override
   String toString() {
-    return 'TrackUploadInitRequest(title: $title, artistName: $artistName, fileExtension: $fileExtension, fileSize: $fileSize, artworkExtension: $artworkExtension)';
+    return 'TrackUploadInitRequest(title: $title, artistName: $artistName, fileExtension: $fileExtension, fileSize: $fileSize, artworkExtension: $artworkExtension, storyLead: $storyLead, storyBody: $storyBody)';
   }
 
   @override
@@ -193,12 +225,16 @@ class _$TrackUploadInitRequestImpl extends _TrackUploadInitRequest {
             (identical(other.fileSize, fileSize) ||
                 other.fileSize == fileSize) &&
             (identical(other.artworkExtension, artworkExtension) ||
-                other.artworkExtension == artworkExtension));
+                other.artworkExtension == artworkExtension) &&
+            (identical(other.storyLead, storyLead) ||
+                other.storyLead == storyLead) &&
+            (identical(other.storyBody, storyBody) ||
+                other.storyBody == storyBody));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, title, artistName, fileExtension,
-      fileSize, artworkExtension);
+      fileSize, artworkExtension, storyLead, storyBody);
 
   /// Create a copy of TrackUploadInitRequest
   /// with the given fields replaced by the non-null parameter values.
@@ -216,7 +252,9 @@ abstract class _TrackUploadInitRequest extends TrackUploadInitRequest {
       required final String artistName,
       required final String fileExtension,
       required final int fileSize,
-      final String? artworkExtension}) = _$TrackUploadInitRequestImpl;
+      final String? artworkExtension,
+      final String? storyLead,
+      final String? storyBody}) = _$TrackUploadInitRequestImpl;
   const _TrackUploadInitRequest._() : super._();
 
   @override
@@ -229,6 +267,10 @@ abstract class _TrackUploadInitRequest extends TrackUploadInitRequest {
   int get fileSize;
   @override
   String? get artworkExtension;
+  @override
+  String? get storyLead;
+  @override
+  String? get storyBody;
 
   /// Create a copy of TrackUploadInitRequest
   /// with the given fields replaced by the non-null parameter values.

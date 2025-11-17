@@ -14,6 +14,13 @@ def create_track(
     *,
     user_id: UUID = DEFAULT_USER_ID,
     title: str = "Demo Track",
+    duration_seconds: int | None = None,
+    bpm: float | None = None,
+    loudness_lufs: float | None = None,
+    mood_valence: float | None = None,
+    mood_energy: float | None = None,
+    has_vocals: bool | None = None,
+    tags: list[str] | None = None,
 ) -> models.Track:
     track = models.Track(
         id=uuid4(),
@@ -22,6 +29,13 @@ def create_track(
         user_id=user_id,
         artwork_url="https://example.com/art.png",
         hls_url="https://example.com/audio.m3u8",
+        duration_seconds=duration_seconds,
+        bpm=bpm,
+        loudness_lufs=loudness_lufs,
+        mood_valence=mood_valence,
+        mood_energy=mood_energy,
+        has_vocals=has_vocals,
+        tags=tags or [],
     )
     session.add(track)
     session.commit()

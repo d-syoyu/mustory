@@ -11,6 +11,8 @@ class TrackUploadInitRequest with _$TrackUploadInitRequest {
     required String fileExtension,
     required int fileSize,
     String? artworkExtension,
+    String? storyLead,
+    String? storyBody,
   }) = _TrackUploadInitRequest;
 
   factory TrackUploadInitRequest.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,8 @@ class TrackUploadInitRequest with _$TrackUploadInitRequest {
       fileExtension: json['file_extension'] as String,
       fileSize: json['file_size'] as int,
       artworkExtension: json['artwork_extension'] as String?,
+      storyLead: json['story_lead'] as String?,
+      storyBody: json['story_body'] as String?,
     );
   }
 
@@ -31,6 +35,8 @@ class TrackUploadInitRequest with _$TrackUploadInitRequest {
         'file_extension': fileExtension,
         'file_size': fileSize,
         if (artworkExtension != null) 'artwork_extension': artworkExtension,
+        if (storyLead != null) 'story_lead': storyLead,
+        if (storyBody != null) 'story_body': storyBody,
       };
 }
 

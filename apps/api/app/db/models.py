@@ -9,8 +9,10 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     Enum as SqlEnum,
+    Float,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
     UniqueConstraint,
@@ -63,8 +65,16 @@ class Track(Base):
     )
     processing_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    bpm: Mapped[float | None] = mapped_column(Float, nullable=True)
+    loudness_lufs: Mapped[float | None] = mapped_column(Float, nullable=True)
+    mood_valence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    mood_energy: Mapped[float | None] = mapped_column(Float, nullable=True)
+    has_vocals: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    audio_embedding: Mapped[list[float] | None] = mapped_column(JSON, nullable=True)
+    tags: Mapped[list[str]] = mapped_column(JSON, default=list)
     # Metadata
     like_count: Mapped[int] = mapped_column(Integer, default=0)
+    view_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow
     )

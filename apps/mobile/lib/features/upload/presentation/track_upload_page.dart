@@ -15,6 +15,8 @@ class TrackUploadPage extends HookConsumerWidget {
     final uploadState = ref.watch(uploadControllerProvider);
     final titleController = useTextEditingController();
     final artistController = useTextEditingController();
+    final storyLeadController = useTextEditingController();
+    final storyBodyController = useTextEditingController();
     final audioFile = useState<File?>(null);
     final artworkFile = useState<File?>(null);
     final formKey = useMemoized(() => GlobalKey<FormState>());
@@ -30,6 +32,8 @@ class TrackUploadPage extends HookConsumerWidget {
           formKey: formKey,
           titleController: titleController,
           artistController: artistController,
+          storyLeadController: storyLeadController,
+          storyBodyController: storyBodyController,
           audioFile: audioFile,
           artworkFile: artworkFile,
         ),
@@ -64,6 +68,8 @@ class TrackUploadPage extends HookConsumerWidget {
           message: message,
           titleController: titleController,
           artistController: artistController,
+          storyLeadController: storyLeadController,
+          storyBodyController: storyBodyController,
           audioFile: audioFile,
           artworkFile: artworkFile,
         ),
@@ -77,6 +83,8 @@ class TrackUploadPage extends HookConsumerWidget {
     required GlobalKey<FormState> formKey,
     required TextEditingController titleController,
     required TextEditingController artistController,
+    required TextEditingController storyLeadController,
+    required TextEditingController storyBodyController,
     required ValueNotifier<File?> audioFile,
     required ValueNotifier<File?> artworkFile,
   }) {
@@ -212,17 +220,50 @@ class TrackUploadPage extends HookConsumerWidget {
             ),
             const SizedBox(height: 24),
 
+            // Story Section
+            Text(
+              'ストーリー (Optional)',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: storyLeadController,
+              decoration: const InputDecoration(
+                labelText: 'リード文',
+                hintText: 'この曲についての短い紹介文',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: storyBodyController,
+              decoration: const InputDecoration(
+                labelText: '本文',
+                hintText: 'この曲に込めた想いやストーリーを詳しく書いてください',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 10,
+              minLines: 5,
+            ),
+            const SizedBox(height: 24),
+
             // Upload Button
             ElevatedButton(
               onPressed: audioFile.value == null
                   ? null
                   : () async {
                       if (formKey.currentState!.validate()) {
+                        final storyLead = storyLeadController.text.trim();
+                        final storyBody = storyBodyController.text.trim();
+
                         await ref.read(uploadControllerProvider.notifier).uploadTrack(
                               title: titleController.text.trim(),
                               artistName: artistController.text.trim(),
                               audioFile: audioFile.value!,
                               artworkFile: artworkFile.value,
+                              storyLead: storyLead.isNotEmpty ? storyLead : null,
+                              storyBody: storyBody.isNotEmpty ? storyBody : null,
                             );
                       }
                     },
@@ -345,6 +386,8 @@ class TrackUploadPage extends HookConsumerWidget {
     required String message,
     required TextEditingController titleController,
     required TextEditingController artistController,
+    required TextEditingController storyLeadController,
+    required TextEditingController storyBodyController,
     required ValueNotifier<File?> audioFile,
     required ValueNotifier<File?> artworkFile,
   }) {
@@ -374,11 +417,16 @@ class TrackUploadPage extends HookConsumerWidget {
             ElevatedButton(
               onPressed: () async {
                 if (audioFile.value != null) {
+                  final storyLead = storyLeadController.text.trim();
+                  final storyBody = storyBodyController.text.trim();
+
                   await ref.read(uploadControllerProvider.notifier).retry(
                         title: titleController.text.trim(),
                         artistName: artistController.text.trim(),
                         audioFile: audioFile.value!,
                         artworkFile: artworkFile.value,
+                        storyLead: storyLead.isNotEmpty ? storyLead : null,
+                        storyBody: storyBody.isNotEmpty ? storyBody : null,
                       );
                 }
               },

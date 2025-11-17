@@ -31,9 +31,9 @@ class TrackCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Artwork Image with Play Button Overlay
+            // Artwork Image with Playing Indicator
             AspectRatio(
-              aspectRatio: 16 / 9,
+              aspectRatio: 1.0,
               child: Stack(
                 children: [
                   CachedNetworkImage(
@@ -56,41 +56,41 @@ class TrackCard extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  // Play/Pause Button Overlay
-                  Center(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        iconSize: 48,
-                        icon: isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Icon(
-                                isPlaying ? Icons.pause : Icons.play_arrow,
-                                color: Colors.white,
-                              ),
-                        onPressed: () async {
-                          final controller = ref.read(
-                            audioPlayerControllerProvider.notifier,
-                          );
-                          if (isCurrentTrack) {
-                            await controller.togglePlayPause();
-                          } else {
-                            await controller.playTrack(track);
-                          }
-                        },
+                  // Playing indicator overlay
+                  if (isPlaying)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.3),
+                            ],
+                          ),
+                        ),
+                        child: Align(
+                          alignment: Alignment.bottomRight,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Icon(
+                              Icons.equalizer,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 24,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  // Loading indicator
+                  if (isLoading)
+                    const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -126,62 +126,20 @@ class TrackCard extends ConsumerWidget {
                   // Stats Row
                   Row(
                     children: [
-                      // Views (play count) - placeholder for now
-                      Icon(
-                        Icons.remove_red_eye,
-                        size: 14,
+                      // Like count
+                      _StatChip(
+                        icon: Icons.favorite,
+                        count: track.likeCount,
+                        color: track.isLiked ? Colors.red : Colors.grey[600],
+                      ),
+                      const SizedBox(width: 8),
+
+                      // View count
+                      _StatChip(
+                        icon: Icons.play_arrow,
+                        count: track.viewCount,
                         color: Colors.grey[600],
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '0', // TODO: Add plays_count to Track model
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                            ),
-                      ),
-                      const SizedBox(width: 12),
-
-                      // Comments - placeholder for now
-                      Icon(
-                        Icons.comment,
-                        size: 14,
-                        color: Colors.grey[600],
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '0', // TODO: Add comments_count to Track model
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                            ),
-                      ),
-                      const SizedBox(width: 12),
-
-                      // Like Count
-                      Icon(
-                        Icons.favorite,
-                        size: 14,
-                        color: Colors.grey[600],
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${track.likeCount}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                            ),
-                      ),
-                      const SizedBox(width: 12),
-
-                      // Story Indicator
-                      if (track.hasStory) ...[
-                        Icon(
-                          Icons.book,
-                          size: 14,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ],
 
                       const Spacer(),
 
@@ -193,7 +151,8 @@ class TrackCard extends ConsumerWidget {
                         onPressed: onLike,
                         color: track.isLiked
                             ? Colors.red
-                            : Theme.of(context).colorScheme.primary,
+                            : Colors.grey[600],
+                        iconSize: 22,
                       ),
                     ],
                   ),
@@ -204,5 +163,57 @@ class TrackCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+/// Stat chip for displaying counts with icons
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final int count;
+  final Color? color;
+
+  const _StatChip({
+    required this.icon,
+    required this.count,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: color ?? Colors.grey[600],
+          ),
+          const SizedBox(width: 4),
+          Text(
+            _formatCount(count),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color ?? Colors.grey[700],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatCount(int count) {
+    if (count >= 10000) {
+      return '${(count / 1000).toStringAsFixed(1)}k';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(0)}k';
+    }
+    return count.toString();
   }
 }

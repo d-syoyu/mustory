@@ -14,7 +14,15 @@ class TrackSchema(BaseModel):
     artwork_url: str
     hls_url: str
     like_count: int
+    view_count: int
     is_liked: bool = False
+    duration_seconds: int | None = None
+    bpm: float | None = None
+    loudness_lufs: float | None = None
+    mood_valence: float | None = None
+    mood_energy: float | None = None
+    has_vocals: bool | None = None
+    tags: list[str] = Field(default_factory=list)
     story: StorySchema | None = None
 
 
@@ -37,6 +45,14 @@ class TrackUploadInitRequest(BaseModel):
     file_size: int = Field(..., gt=0, lt=500 * 1024 * 1024, description="File size in bytes (max 500MB)")
     artwork_extension: str | None = Field(
         None, pattern=r"^(jpg|jpeg|png|webp)$", description="Artwork file extension"
+    )
+    story_lead: str | None = Field(None, max_length=500, description="Story lead text (optional)")
+    story_body: str | None = Field(None, max_length=10000, description="Story body text (optional)")
+    tags: list[str] | None = Field(
+        default=None,
+        description="Optional list of user-supplied tags or short genre labels",
+        min_length=0,
+        max_length=16,
     )
 
 

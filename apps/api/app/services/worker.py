@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from ..core.config import get_settings
 from ..core.storage import StorageClient
 from ..db import models
+from .audio_analysis import AudioFeatureSet, extract_audio_features
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,13 @@ def process_track_to_hls(track_id: str) -> None:
             # Download from R2
             storage.download_file(original_key, str(original_file))
             logger.info(f"Downloaded {original_key} to {original_file}")
+
+            # Extract audio features before mutating the file
+            audio_features: AudioFeatureSet | None = None
+            try:
+                audio_features = extract_audio_features(original_file)
+            except Exception as feature_error:  # pragma: no cover - logging path
+                logger.warning("Audio analysis failed for %s: %s", track_id, feature_error)
 
             # Step 2: Convert to HLS using FFmpeg
             logger.info(f"Converting track {track_id} to HLS")
@@ -121,10 +129,18 @@ def process_track_to_hls(track_id: str) -> None:
                 )
                 logger.info(f"Uploaded segment: {segment_key}")
 
-            # Step 4: Update track with HLS URL
+            # Step 4: Update track with HLS URL and audio descriptors
             hls_url = storage.get_public_url(playlist_key)
             track.hls_url = hls_url
             track.processing_status = models.TrackProcessingStatus.COMPLETED
+            if audio_features:
+                track.duration_seconds = audio_features.duration_seconds
+                track.bpm = audio_features.bpm
+                track.loudness_lufs = audio_features.loudness_lufs
+                track.mood_valence = audio_features.mood_valence
+                track.mood_energy = audio_features.mood_energy
+                track.has_vocals = audio_features.has_vocals
+                track.audio_embedding = audio_features.audio_embedding
             db.commit()
 
             logger.info(f"Successfully processed track {track_id}")

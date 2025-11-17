@@ -31,6 +31,8 @@ class UploadController extends StateNotifier<UploadState> {
     required String artistName,
     required File audioFile,
     File? artworkFile,
+    String? storyLead,
+    String? storyBody,
   }) async {
     try {
       // Step 1: Get file information
@@ -56,6 +58,8 @@ class UploadController extends StateNotifier<UploadState> {
         fileExtension: audioExtension,
         fileSize: audioSize,
         artworkExtension: artworkExtension,
+        storyLead: storyLead,
+        storyBody: storyBody,
       );
 
       final initResponse = await _repository.initializeUpload(initRequest);
@@ -172,6 +176,8 @@ class UploadController extends StateNotifier<UploadState> {
     required String artistName,
     required File audioFile,
     File? artworkFile,
+    String? storyLead,
+    String? storyBody,
   }) async {
     reset();
     await uploadTrack(
@@ -179,6 +185,8 @@ class UploadController extends StateNotifier<UploadState> {
       artistName: artistName,
       audioFile: audioFile,
       artworkFile: artworkFile,
+      storyLead: storyLead,
+      storyBody: storyBody,
     );
   }
 }

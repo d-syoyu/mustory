@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import '../../../core/auth/auth_controller.dart';
+import '../../../core/widgets/skeleton_loader.dart';
+import '../../../core/audio/audio_player_controller.dart';
+import '../../../features/tracks/application/recommended_tracks_provider.dart';
 import '../../../features/tracks/application/tracks_controller.dart';
 import '../../../features/tracks/presentation/widgets/track_card.dart';
+import '../../../features/tracks/presentation/widgets/horizontal_track_card.dart';
 import '../../../features/tracks/presentation/widgets/mini_player.dart';
 
 class HomePage extends HookConsumerWidget {
@@ -11,8 +14,8 @@ class HomePage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authControllerProvider);
     final tracksState = ref.watch(tracksControllerProvider);
+    final recommendedTracks = ref.watch(recommendedTracksProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -23,48 +26,162 @@ class HomePage extends HookConsumerWidget {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
-                await ref.read(tracksControllerProvider.notifier).refresh();
+                await Future.wait([
+                  ref.read(tracksControllerProvider.notifier).refresh(),
+                  ref.refresh(recommendedTracksProvider.future),
+                ]);
               },
               child: CustomScrollView(
                 slivers: [
-                  // User info card
+                  // おすすめセクション (横スクロールカルーセル)
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: authState.maybeWhen(
-                        authenticated: (userId, email, displayName, _) => Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'ようこそ、$displayNameさん',
-                                  style: Theme.of(context).textTheme.titleMedium,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.auto_awesome,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'あなたへのおすすめ',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          height: 240,
+                          child: recommendedTracks.when(
+                            data: (tracks) {
+                              if (tracks.isEmpty) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  child: Card(
+                                    child: Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Text(
+                                          'おすすめトラックはまだありません',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              final displayTracks = tracks.take(10).toList();
+
+                              return ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  email,
-                                  style: Theme.of(context).textTheme.bodySmall,
+                                itemCount: displayTracks.length,
+                                itemBuilder: (context, index) {
+                                  final track = displayTracks[index];
+                                  return HorizontalTrackCard(
+                                    track: track,
+                                    onTap: () async {
+                                      final audioController = ref.read(
+                                        audioPlayerControllerProvider.notifier,
+                                      );
+                                      await audioController.playTrack(track);
+                                      if (context.mounted) {
+                                        context.go('/tracks/${track.id}');
+                                      }
+                                    },
+                                  );
+                                },
+                              );
+                            },
+                            loading: () => const HorizontalTrackListSkeleton(),
+                            error: (error, _) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: Card(
+                                color: Colors.orange[50],
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.wifi_tethering_error,
+                                        color: Colors.orange,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'おすすめの読み込みに失敗しました',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        error.toString(),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                                color: Colors.orange[900]),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      OutlinedButton(
+                                        onPressed: () {
+                                          ref.refresh(
+                                              recommendedTracksProvider);
+                                        },
+                                        child: const Text('再読み込み'),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
-                        orElse: () => const SizedBox.shrink(),
-                      ),
+                      ],
                     ),
                   ),
 
-                  // Section Header
+                  // 今日の注目 Section Header
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                      child: Text(
-                        '新着トラック',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.local_fire_department,
+                            size: 20,
+                            color: Colors.orange[700],
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '今日の注目',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -80,7 +197,8 @@ class HomePage extends HookConsumerWidget {
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
                               children: [
-                                const Icon(Icons.error_outline, color: Colors.red),
+                                const Icon(Icons.error_outline,
+                                    color: Colors.red),
                                 const SizedBox(height: 8),
                                 Text(
                                   'エラーが発生しました',
@@ -110,10 +228,8 @@ class HomePage extends HookConsumerWidget {
 
                   // Tracks List
                   if (tracksState.tracks.isEmpty && tracksState.isLoading)
-                    const SliverFillRemaining(
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                    const SliverToBoxAdapter(
+                      child: TrackListSkeleton(itemCount: 5),
                     )
                   else if (tracksState.tracks.isEmpty)
                     SliverFillRemaining(
@@ -143,12 +259,19 @@ class HomePage extends HookConsumerWidget {
                             final track = tracksState.tracks[index];
                             return TrackCard(
                               track: track,
-                              onTap: () {
-                                // TODO: Navigate to track detail
-                                context.go('/tracks/${track.id}');
+                              onTap: () async {
+                                // Play track and navigate to detail
+                                final audioController = ref.read(
+                                  audioPlayerControllerProvider.notifier,
+                                );
+                                await audioController.playTrack(track);
+                                if (context.mounted) {
+                                  context.go('/tracks/${track.id}');
+                                }
                               },
                               onLike: () {
-                                final notifier = ref.read(tracksControllerProvider.notifier);
+                                final notifier =
+                                    ref.read(tracksControllerProvider.notifier);
                                 if (track.isLiked) {
                                   notifier.unlikeTrack(track.id);
                                 } else {
@@ -157,9 +280,11 @@ class HomePage extends HookConsumerWidget {
                               },
                             );
                           } else if (tracksState.hasMore) {
-                            // Load more trigger - schedule after build
+                            // Load more trigger
                             Future.microtask(() {
-                              ref.read(tracksControllerProvider.notifier).loadMore();
+                              ref
+                                  .read(tracksControllerProvider.notifier)
+                                  .loadMore();
                             });
                             return const Padding(
                               padding: EdgeInsets.all(16.0),

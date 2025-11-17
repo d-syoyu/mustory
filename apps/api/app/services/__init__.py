@@ -1,5 +1,5 @@
 """Domain services."""
 
-from . import worker
+from . import recommendations, worker
 
-__all__ = ["worker"]
+__all__ = ["worker", "recommendations"]

@@ -33,6 +33,29 @@ class TracksRepository {
     }
   }
 
+  Future<List<Track>> getRecommendedTracks({
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/tracks/recommendations',
+        queryParameters: {
+          'limit': limit,
+        },
+      );
+
+      if (response.data is List) {
+        return (response.data as List)
+            .map((json) => Track.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+
+      return [];
+    } on DioException catch (e) {
+      throw Exception('Failed to load recommended tracks: ${e.message}');
+    }
+  }
+
   Future<TrackDetail> getTrackDetail(String id) async {
     try {
       final response = await _dio.get('/tracks/$id');
@@ -107,6 +130,87 @@ class TracksRepository {
       await _dio.delete<void>('/tracks/$trackId/like');
     } on DioException catch (e) {
       throw Exception('Failed to unlike track: ${e.message}');
+    }
+  }
+
+  Future<List<Track>> getLikedTracks({
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/tracks/liked',
+        queryParameters: {
+          'limit': limit,
+          'offset': offset,
+        },
+      );
+
+      if (response.data is List) {
+        return (response.data as List)
+            .map((json) => Track.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+
+      return [];
+    } on DioException catch (e) {
+      throw Exception('Failed to load liked tracks: ${e.message}');
+    }
+  }
+
+  Future<List<Track>> getMyTracks({
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/tracks/my',
+        queryParameters: {
+          'limit': limit,
+          'offset': offset,
+        },
+      );
+
+      if (response.data is List) {
+        return (response.data as List)
+            .map((json) => Track.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+
+      return [];
+    } on DioException catch (e) {
+      throw Exception('Failed to load my tracks: ${e.message}');
+    }
+  }
+
+  Future<Track> updateTrack(
+    String trackId, {
+    required String title,
+    required String artistName,
+    String? storyLead,
+    String? storyBody,
+  }) async {
+    try {
+      final response = await _dio.patch<Map<String, dynamic>>(
+        '/tracks/$trackId',
+        queryParameters: {
+          'title': title,
+          'artist_name': artistName,
+          if (storyLead != null) 'story_lead': storyLead,
+          if (storyBody != null) 'story_body': storyBody,
+        },
+      );
+      return Track.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw Exception('Failed to update track: ${e.message}');
+    }
+  }
+
+  Future<void> deleteTrack(String trackId) async {
+    try {
+      await _dio.delete<void>('/tracks/$trackId');
+    } on DioException catch (e) {
+      throw Exception('Failed to delete track: ${e.message}');
     }
   }
 }

@@ -4,6 +4,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mustory_mobile/features/home/presentation/home_page.dart';
 import 'package:mustory_mobile/features/profile/presentation/my_page.dart';
 import 'package:mustory_mobile/features/tracks/presentation/track_detail_page.dart';
+import 'package:mustory_mobile/features/tracks/presentation/my_tracks_page.dart';
+import 'package:mustory_mobile/features/tracks/presentation/liked_tracks_page.dart';
 import 'package:mustory_mobile/features/auth/presentation/login_page.dart';
 import 'package:mustory_mobile/features/auth/presentation/signup_page.dart';
 import 'package:mustory_mobile/features/upload/presentation/track_upload_page.dart';
@@ -52,6 +54,18 @@ final appRouterProvider = Provider<GoRouter>(
             final trackId = state.pathParameters['trackId']!;
             return TrackDetailPage(trackId: trackId);
           },
+        ),
+        // My tracks page (outside shell to hide bottom nav)
+        GoRoute(
+          path: '/my-tracks',
+          name: 'my-tracks',
+          builder: (context, state) => const MyTracksPage(),
+        ),
+        // Liked tracks page (outside shell to hide bottom nav)
+        GoRoute(
+          path: '/liked-tracks',
+          name: 'liked-tracks',
+          builder: (context, state) => const LikedTracksPage(),
         ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {

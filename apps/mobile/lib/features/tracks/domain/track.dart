@@ -12,6 +12,7 @@ class Track with _$Track {
     required String artworkUrl,
     required String hlsUrl,
     @Default(0) int likeCount,
+    @Default(0) int viewCount,
     @Default(false) bool isLiked,
     Map<String, dynamic>? story,
   }) = _Track;
@@ -28,6 +29,7 @@ class Track with _$Track {
         artworkUrl: json['artwork_url'] as String,
         hlsUrl: json['hls_url'] as String,
         likeCount: (json['like_count'] as num?)?.toInt() ?? 0,
+        viewCount: (json['view_count'] as num?)?.toInt() ?? 0,
         isLiked: json['is_liked'] as bool? ?? false,
         story: json['story'] as Map<String, dynamic>?,
       );
@@ -40,6 +42,7 @@ class Track with _$Track {
         'artwork_url': artworkUrl,
         'hls_url': hlsUrl,
         'like_count': likeCount,
+        'view_count': viewCount,
         'is_liked': isLiked,
         'story': story,
       };
