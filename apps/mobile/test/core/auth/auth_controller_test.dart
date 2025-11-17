@@ -22,6 +22,8 @@ void main() {
           authRepositoryProvider.overrideWithValue(mockAuthRepository),
         ],
       );
+      when(mockAuthRepository.authStateChanges)
+          .thenAnswer((_) => const Stream.empty());
     });
 
     tearDown(() {

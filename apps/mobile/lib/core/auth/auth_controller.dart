@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'auth_repository.dart';
@@ -5,9 +7,11 @@ import 'auth_state.dart';
 
 class AuthController extends StateNotifier<AppAuthState> {
   final AuthRepository _authRepository;
+  StreamSubscription<supabase.AuthState>? _authSubscription;
 
   AuthController(this._authRepository) : super(const AppAuthState.initial()) {
     _checkAuthState();
+    _listenToAuthChanges();
   }
 
   void _checkAuthState() {
@@ -24,6 +28,25 @@ class AuthController extends StateNotifier<AppAuthState> {
     } else {
       state = const AppAuthState.unauthenticated();
     }
+  }
+
+  void _listenToAuthChanges() {
+    _authSubscription?.cancel();
+    _authSubscription = _authRepository.authStateChanges.listen((authState) {
+      final session = authState.session ?? _authRepository.currentSession;
+      final user = session?.user;
+
+      if (user != null && session != null) {
+        state = AppAuthState.authenticated(
+          userId: user.id,
+          email: user.email ?? '',
+          displayName: user.userMetadata?['display_name'] ?? '',
+          accessToken: session.accessToken,
+        );
+      } else {
+        state = const AppAuthState.unauthenticated();
+      }
+    });
   }
 
   Future<void> signUp({
@@ -109,6 +132,12 @@ class AuthController extends StateNotifier<AppAuthState> {
       state = const AppAuthState.unauthenticated();
       rethrow;
     }
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
   }
 }
 

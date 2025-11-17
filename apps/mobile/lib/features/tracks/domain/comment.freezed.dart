@@ -27,6 +27,7 @@ mixin _$Comment {
   String? get parentCommentId => throw _privateConstructorUsedError;
   int get likeCount => throw _privateConstructorUsedError;
   int get replyCount => throw _privateConstructorUsedError;
+  bool get isLiked => throw _privateConstructorUsedError;
   List<Comment> get replies => throw _privateConstructorUsedError;
 
   /// Create a copy of Comment
@@ -51,6 +52,7 @@ abstract class $CommentCopyWith<$Res> {
       String? parentCommentId,
       int likeCount,
       int replyCount,
+      bool isLiked,
       List<Comment> replies});
 }
 
@@ -79,6 +81,7 @@ class _$CommentCopyWithImpl<$Res, $Val extends Comment>
     Object? parentCommentId = freezed,
     Object? likeCount = null,
     Object? replyCount = null,
+    Object? isLiked = null,
     Object? replies = null,
   }) {
     return _then(_value.copyWith(
@@ -122,6 +125,10 @@ class _$CommentCopyWithImpl<$Res, $Val extends Comment>
           ? _value.replyCount
           : replyCount // ignore: cast_nullable_to_non_nullable
               as int,
+      isLiked: null == isLiked
+          ? _value.isLiked
+          : isLiked // ignore: cast_nullable_to_non_nullable
+              as bool,
       replies: null == replies
           ? _value.replies
           : replies // ignore: cast_nullable_to_non_nullable
@@ -148,6 +155,7 @@ abstract class _$$CommentImplCopyWith<$Res> implements $CommentCopyWith<$Res> {
       String? parentCommentId,
       int likeCount,
       int replyCount,
+      bool isLiked,
       List<Comment> replies});
 }
 
@@ -174,6 +182,7 @@ class __$$CommentImplCopyWithImpl<$Res>
     Object? parentCommentId = freezed,
     Object? likeCount = null,
     Object? replyCount = null,
+    Object? isLiked = null,
     Object? replies = null,
   }) {
     return _then(_$CommentImpl(
@@ -217,6 +226,10 @@ class __$$CommentImplCopyWithImpl<$Res>
           ? _value.replyCount
           : replyCount // ignore: cast_nullable_to_non_nullable
               as int,
+      isLiked: null == isLiked
+          ? _value.isLiked
+          : isLiked // ignore: cast_nullable_to_non_nullable
+              as bool,
       replies: null == replies
           ? _value._replies
           : replies // ignore: cast_nullable_to_non_nullable
@@ -239,7 +252,8 @@ class _$CommentImpl implements _Comment {
       this.parentCommentId,
       this.likeCount = 0,
       this.replyCount = 0,
-      final List<Comment> replies = const []})
+      this.isLiked = false,
+      final List<Comment> replies = const <Comment>[]})
       : _replies = replies;
 
   @override
@@ -265,6 +279,9 @@ class _$CommentImpl implements _Comment {
   @override
   @JsonKey()
   final int replyCount;
+  @override
+  @JsonKey()
+  final bool isLiked;
   final List<Comment> _replies;
   @override
   @JsonKey()
@@ -276,7 +293,7 @@ class _$CommentImpl implements _Comment {
 
   @override
   String toString() {
-    return 'Comment(id: $id, authorUserId: $authorUserId, authorDisplayName: $authorDisplayName, body: $body, createdAt: $createdAt, targetType: $targetType, targetId: $targetId, parentCommentId: $parentCommentId, likeCount: $likeCount, replyCount: $replyCount, replies: $replies)';
+    return 'Comment(id: $id, authorUserId: $authorUserId, authorDisplayName: $authorDisplayName, body: $body, createdAt: $createdAt, targetType: $targetType, targetId: $targetId, parentCommentId: $parentCommentId, likeCount: $likeCount, replyCount: $replyCount, isLiked: $isLiked, replies: $replies)';
   }
 
   @override
@@ -302,6 +319,7 @@ class _$CommentImpl implements _Comment {
                 other.likeCount == likeCount) &&
             (identical(other.replyCount, replyCount) ||
                 other.replyCount == replyCount) &&
+            (identical(other.isLiked, isLiked) || other.isLiked == isLiked) &&
             const DeepCollectionEquality().equals(other._replies, _replies));
   }
 
@@ -318,6 +336,7 @@ class _$CommentImpl implements _Comment {
       parentCommentId,
       likeCount,
       replyCount,
+      isLiked,
       const DeepCollectionEquality().hash(_replies));
 
   /// Create a copy of Comment
@@ -341,6 +360,7 @@ abstract class _Comment implements Comment {
       final String? parentCommentId,
       final int likeCount,
       final int replyCount,
+      final bool isLiked,
       final List<Comment> replies}) = _$CommentImpl;
 
   @override
@@ -363,6 +383,8 @@ abstract class _Comment implements Comment {
   int get likeCount;
   @override
   int get replyCount;
+  @override
+  bool get isLiked;
   @override
   List<Comment> get replies;
 

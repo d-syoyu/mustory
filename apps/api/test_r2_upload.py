@@ -46,8 +46,7 @@ def test_r2_connection():
         )
 
         print("\n[OK] Audio upload presigned URL generated successfully!")
-        print(f"  URL: {audio_presigned['url'][:60]}...")
-        print(f"  Fields: {list(audio_presigned['fields'].keys())}")
+        print(f"  URL: {audio_presigned[:80]}...")
 
         # Test presigned URL for artwork
         artwork_presigned = storage.generate_presigned_upload_url(
@@ -57,7 +56,7 @@ def test_r2_connection():
         )
 
         print("\n[OK] Artwork upload presigned URL generated successfully!")
-        print(f"  URL: {artwork_presigned['url'][:60]}...")
+        print(f"  URL: {artwork_presigned[:80]}...")
 
         # Test public URL generation
         public_url = storage.get_public_url("tracks/12345/original.mp3")

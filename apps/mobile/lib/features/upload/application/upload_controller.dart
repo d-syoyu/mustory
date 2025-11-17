@@ -17,8 +17,13 @@ final uploadControllerProvider =
 
 class UploadController extends StateNotifier<UploadState> {
   final UploadRepository _repository;
+  final Duration _pollInterval;
 
-  UploadController(this._repository) : super(const UploadState.idle());
+  UploadController(
+    this._repository, {
+    Duration pollInterval = const Duration(seconds: 2),
+  })  : _pollInterval = pollInterval,
+        super(const UploadState.idle());
 
   /// Upload a track with audio file and optional artwork
   Future<void> uploadTrack({
@@ -128,7 +133,7 @@ class UploadController extends StateNotifier<UploadState> {
     try {
       // Poll for max 30 seconds (15 attempts * 2 seconds)
       for (var i = 0; i < 15; i++) {
-        await Future<void>.delayed(const Duration(seconds: 2));
+        await Future<void>.delayed(_pollInterval);
 
         final status = await _repository.getProcessingStatus(trackId);
 

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -12,7 +12,7 @@ from app.core.supabase import get_supabase_client
 from app.db import models
 from app.dependencies.database import get_db
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 optional_security = HTTPBearer(auto_error=False)
 
 
@@ -25,14 +25,24 @@ class UserContext:
 
 
 async def get_current_user(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
     db: Annotated[Session, Depends(get_db)],
+    request: Request,
 ) -> UserContext:
     """
     Extract and verify user from Supabase JWT token, then fetch user details from database.
 
     Raises HTTPException if token is invalid or expired.
     """
+    auth_header = request.headers.get("authorization", "<missing>")
+    print(f"[auth] Received Authorization header: {auth_header}")
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     token = credentials.credentials
     supabase = get_supabase_client()
 

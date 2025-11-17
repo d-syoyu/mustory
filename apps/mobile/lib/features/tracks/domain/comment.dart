@@ -16,7 +16,7 @@ class Comment with _$Comment {
     @Default(0) int likeCount,
     @Default(0) int replyCount,
     @Default(false) bool isLiked,
-    @Default([]) List<Comment> replies,
+    @Default(<Comment>[]) List<Comment> replies,
   }) = _Comment;
 
   factory Comment.fromJson(Map<String, dynamic> json) => Comment(
