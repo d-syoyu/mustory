@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Iterable
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import select
 
 from ...db import models
@@ -13,6 +13,58 @@ from ...schemas.comments import CommentCreateSchema, CommentSchema
 from ...schemas.story import StoryCreateSchema, StorySchema, StoryUpdateSchema
 
 router = APIRouter(prefix="/stories", tags=["stories"])
+
+
+@router.get("/liked", response_model=list[StorySchema])
+def list_liked_stories(
+    db: DbSession,
+    current_user: CurrentUser,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> list[StorySchema]:
+    """
+    List stories liked by the current user.
+
+    - **limit**: Maximum number of stories to return (1-100, default 20)
+    - **offset**: Number of stories to skip (default 0)
+    - Returns liked stories ordered by most recently liked first
+    """
+    # Get liked story IDs for the current user
+    liked_story_ids = db.scalars(
+        select(models.LikeStory.story_id)
+        .where(models.LikeStory.user_id == current_user.id)
+        .order_by(models.LikeStory.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    ).all()
+
+    if not liked_story_ids:
+        return []
+
+    # Fetch stories
+    stories = db.scalars(
+        select(models.Story)
+        .where(models.Story.id.in_(liked_story_ids))
+    ).all()
+
+    # Preserve the order from liked_story_ids
+    story_dict = {story.id: story for story in stories}
+    ordered_stories = [story_dict[story_id] for story_id in liked_story_ids if story_id in story_dict]
+
+    # All stories in this endpoint are liked by the current user
+    return [
+        StorySchema(
+            id=story.id,
+            track_id=story.track_id,
+            author_user_id=story.author_user_id,
+            lead=story.lead,
+            body=story.body,
+            like_count=story.like_count,
+            is_liked=True,
+            created_at=story.created_at,
+        )
+        for story in ordered_stories
+    ]
 
 
 @router.get("/{story_id}", response_model=StorySchema)
@@ -230,6 +282,7 @@ def _map_story(story: models.Story) -> StorySchema:
         lead=story.lead,
         body=story.body,
         like_count=story.like_count,
+        created_at=story.created_at,
     )
 
 

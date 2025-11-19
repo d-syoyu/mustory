@@ -210,7 +210,7 @@ class MyPage extends HookConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'いいねした曲',
+                                      'いいね',
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
@@ -218,7 +218,7 @@ class MyPage extends HookConsumerWidget {
                                     ),
                                     SizedBox(height: 4),
                                     Text(
-                                      'お気に入りのコレクション',
+                                      'お気に入りの曲とストーリー',
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Colors.grey,

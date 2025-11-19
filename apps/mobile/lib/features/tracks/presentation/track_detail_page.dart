@@ -589,25 +589,61 @@ class TrackDetailPage extends HookConsumerWidget {
           ),
           const SizedBox(height: 24),
 
-          // メタ情報とコメントボタン
+          // アクション行（いいね、コメント）
           Row(
             children: [
-              Icon(Icons.favorite, size: 16, color: Colors.grey[600]),
-              const SizedBox(width: 4),
-              Text(
-                '${story['like_count'] ?? 0}',
-                style: TextStyle(color: Colors.grey[600]),
+              // いいねボタン
+              InkWell(
+                onTap: () {
+                  if (!isAuthenticated) {
+                    _promptLogin(context);
+                    return;
+                  }
+                  final storyId = story['id'] as String?;
+                  if (storyId == null) return;
+
+                  final isLiked = story['is_liked'] as bool? ?? false;
+                  final controller = ref.read(trackDetailControllerProvider(trackId).notifier);
+                  if (isLiked) {
+                    controller.unlikeStory(storyId);
+                  } else {
+                    controller.likeStory(storyId);
+                  }
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        (story['is_liked'] as bool? ?? false)
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        size: 24,
+                        color: (story['is_liked'] as bool? ?? false)
+                            ? Colors.red
+                            : Colors.grey[600],
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${story['like_count'] ?? 0}',
+                        style: TextStyle(
+                          color: (story['is_liked'] as bool? ?? false)
+                              ? Colors.red
+                              : Colors.grey[600],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(width: 16),
-              Icon(Icons.comment, size: 16, color: Colors.grey[600]),
-              const SizedBox(width: 4),
-              Text(
-                detail != null ? '${detail.storyComments.length}' : '-',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: () {
+              // コメントボタン
+              InkWell(
+                onTap: () {
                   if (!isAuthenticated) {
                     _promptLogin(context);
                     return;
@@ -625,8 +661,25 @@ class TrackDetailPage extends HookConsumerWidget {
                     );
                   }
                 },
-                icon: const Icon(Icons.comment_outlined, size: 20),
-                label: const Text('コメント'),
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.comment_outlined, size: 24, color: Colors.grey[600]),
+                      const SizedBox(width: 6),
+                      Text(
+                        detail != null ? '${detail.storyComments.length}' : '-',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

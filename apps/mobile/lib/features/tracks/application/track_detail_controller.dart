@@ -64,19 +64,29 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
     final currentDetail = state.trackDetail;
     if (currentDetail == null) return;
 
+    // Optimistically update UI
+    final updatedTrack = currentDetail.track.copyWith(
+      likeCount: currentDetail.track.likeCount + 1,
+      isLiked: true,
+    );
+    state = state.copyWith(
+      trackDetail: currentDetail.copyWith(track: updatedTrack),
+    );
+
     try {
       await _repository.likeTrack(trackId);
-
-      // Update local state
-      final updatedTrack = currentDetail.track.copyWith(
-        likeCount: currentDetail.track.likeCount + 1,
-        isLiked: true,
+      // Refresh to ensure consistency with server
+      await loadTrackDetail();
+    } catch (e) {
+      // Revert on error
+      final revertedTrack = currentDetail.track.copyWith(
+        likeCount: currentDetail.track.likeCount,
+        isLiked: false,
       );
       state = state.copyWith(
-        trackDetail: currentDetail.copyWith(track: updatedTrack),
+        trackDetail: currentDetail.copyWith(track: revertedTrack),
+        error: 'いいねに失敗しました',
       );
-    } catch (e) {
-      state = state.copyWith(error: 'いいねに失敗しました');
     }
   }
 
@@ -84,19 +94,91 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
     final currentDetail = state.trackDetail;
     if (currentDetail == null) return;
 
+    // Optimistically update UI
+    final currentLikeCount = currentDetail.track.likeCount;
+    final updatedTrack = currentDetail.track.copyWith(
+      likeCount: currentLikeCount > 0 ? currentLikeCount - 1 : 0,
+      isLiked: false,
+    );
+    state = state.copyWith(
+      trackDetail: currentDetail.copyWith(track: updatedTrack),
+    );
+
     try {
       await _repository.unlikeTrack(trackId);
-
-      // Update local state
-      final updatedTrack = currentDetail.track.copyWith(
-        likeCount: currentDetail.track.likeCount - 1,
-        isLiked: false,
+      // Refresh to ensure consistency with server
+      await loadTrackDetail();
+    } catch (e) {
+      // Revert on error
+      final revertedTrack = currentDetail.track.copyWith(
+        likeCount: currentDetail.track.likeCount,
+        isLiked: true,
       );
       state = state.copyWith(
-        trackDetail: currentDetail.copyWith(track: updatedTrack),
+        trackDetail: currentDetail.copyWith(track: revertedTrack),
+        error: 'いいね解除に失敗しました',
       );
+    }
+  }
+
+  Future<void> likeStory(String storyId) async {
+    final currentDetail = state.trackDetail;
+    if (currentDetail == null || currentDetail.track.story == null) return;
+
+    // Optimistically update UI
+    final currentStory = currentDetail.track.story!;
+    final updatedStory = Map<String, dynamic>.from(currentStory);
+    updatedStory['like_count'] = (currentStory['like_count'] as int? ?? 0) + 1;
+    updatedStory['is_liked'] = true;
+
+    final updatedTrack = currentDetail.track.copyWith(story: updatedStory);
+    state = state.copyWith(
+      trackDetail: currentDetail.copyWith(track: updatedTrack),
+    );
+
+    try {
+      await _repository.likeStory(storyId);
+      // Refresh to ensure consistency with server
+      await loadTrackDetail();
     } catch (e) {
-      state = state.copyWith(error: 'いいね解除に失敗しました');
+      // Revert on error
+      final revertedStory = Map<String, dynamic>.from(currentStory);
+      final revertedTrack = currentDetail.track.copyWith(story: revertedStory);
+      state = state.copyWith(
+        trackDetail: currentDetail.copyWith(track: revertedTrack),
+        error: 'ストーリーのいいねに失敗しました',
+      );
+    }
+  }
+
+  Future<void> unlikeStory(String storyId) async {
+    final currentDetail = state.trackDetail;
+    if (currentDetail == null || currentDetail.track.story == null) return;
+
+    // Optimistically update UI
+    final currentStory = currentDetail.track.story!;
+    final updatedStory = Map<String, dynamic>.from(currentStory);
+    final currentLikeCount = currentStory['like_count'] as int? ?? 0;
+    updatedStory['like_count'] = currentLikeCount > 0 ? currentLikeCount - 1 : 0;
+    updatedStory['is_liked'] = false;
+
+    final updatedTrack = currentDetail.track.copyWith(story: updatedStory);
+    state = state.copyWith(
+      trackDetail: currentDetail.copyWith(track: updatedTrack),
+    );
+
+    try {
+      await _repository.unlikeStory(storyId);
+      // Refresh to ensure consistency with server
+      await loadTrackDetail();
+    } catch (e) {
+      // Revert on error
+      final revertedStory = Map<String, dynamic>.from(currentStory);
+      final revertedTrack = currentDetail.track.copyWith(story: revertedStory);
+      state = state.copyWith(
+        trackDetail: currentDetail.copyWith(track: revertedTrack),
+        error: 'ストーリーのいいね解除に失敗しました',
+      );
     }
   }
 

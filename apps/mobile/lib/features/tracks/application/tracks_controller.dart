@@ -73,46 +73,85 @@ class TracksController extends StateNotifier<TracksState> {
   }
 
   Future<void> likeTrack(String trackId) async {
+    // Find the original track before update
+    final originalTrack = state.tracks.firstWhere(
+      (track) => track.id == trackId,
+      orElse: () => state.tracks.first,
+    );
+
+    // Optimistically update UI
+    final updatedTracks = state.tracks.map((track) {
+      if (track.id == trackId) {
+        return track.copyWith(
+          likeCount: track.likeCount + 1,
+          isLiked: true,
+        );
+      }
+      return track;
+    }).toList();
+
+    state = state.copyWith(tracks: updatedTracks);
+
     try {
       await _repository.likeTrack(trackId);
-
-      // Update local state
-      final updatedTracks = state.tracks.map((track) {
-        if (track.id == trackId) {
-          return track.copyWith(
-            likeCount: track.likeCount + 1,
-            isLiked: true,
-          );
-        }
-        return track;
-      }).toList();
-
-      state = state.copyWith(tracks: updatedTracks);
     } catch (e) {
-      // Handle error
-      state = state.copyWith(error: e.toString());
-    }
-  }
-
-  Future<void> unlikeTrack(String trackId) async {
-    try {
-      await _repository.unlikeTrack(trackId);
-
-      // Update local state
-      final updatedTracks = state.tracks.map((track) {
+      // Revert on error
+      final revertedTracks = state.tracks.map((track) {
         if (track.id == trackId) {
           return track.copyWith(
-            likeCount: track.likeCount - 1,
+            likeCount: originalTrack.likeCount,
             isLiked: false,
           );
         }
         return track;
       }).toList();
 
-      state = state.copyWith(tracks: updatedTracks);
+      state = state.copyWith(
+        tracks: revertedTracks,
+        error: 'いいねに失敗しました',
+      );
+    }
+  }
+
+  Future<void> unlikeTrack(String trackId) async {
+    // Find the original track before update
+    final originalTrack = state.tracks.firstWhere(
+      (track) => track.id == trackId,
+      orElse: () => state.tracks.first,
+    );
+
+    // Optimistically update UI
+    final updatedTracks = state.tracks.map((track) {
+      if (track.id == trackId) {
+        final currentLikeCount = track.likeCount;
+        return track.copyWith(
+          likeCount: currentLikeCount > 0 ? currentLikeCount - 1 : 0,
+          isLiked: false,
+        );
+      }
+      return track;
+    }).toList();
+
+    state = state.copyWith(tracks: updatedTracks);
+
+    try {
+      await _repository.unlikeTrack(trackId);
     } catch (e) {
-      // Handle error
-      state = state.copyWith(error: e.toString());
+      // Revert on error
+      final revertedTracks = state.tracks.map((track) {
+        if (track.id == trackId) {
+          return track.copyWith(
+            likeCount: originalTrack.likeCount,
+            isLiked: true,
+          );
+        }
+        return track;
+      }).toList();
+
+      state = state.copyWith(
+        tracks: revertedTracks,
+        error: 'いいね解除に失敗しました',
+      );
     }
   }
 }

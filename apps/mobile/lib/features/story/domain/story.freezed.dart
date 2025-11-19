@@ -14,10 +14,6 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-Story _$StoryFromJson(Map<String, dynamic> json) {
-  return _Story.fromJson(json);
-}
-
 /// @nodoc
 mixin _$Story {
   String get id => throw _privateConstructorUsedError;
@@ -26,10 +22,8 @@ mixin _$Story {
   String get lead => throw _privateConstructorUsedError;
   String get body => throw _privateConstructorUsedError;
   int get likeCount => throw _privateConstructorUsedError;
+  bool get isLiked => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
-
-  /// Serializes this Story to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of Story
   /// with the given fields replaced by the non-null parameter values.
@@ -49,6 +43,7 @@ abstract class $StoryCopyWith<$Res> {
       String lead,
       String body,
       int likeCount,
+      bool isLiked,
       DateTime createdAt});
 }
 
@@ -73,6 +68,7 @@ class _$StoryCopyWithImpl<$Res, $Val extends Story>
     Object? lead = null,
     Object? body = null,
     Object? likeCount = null,
+    Object? isLiked = null,
     Object? createdAt = null,
   }) {
     return _then(_value.copyWith(
@@ -100,6 +96,10 @@ class _$StoryCopyWithImpl<$Res, $Val extends Story>
           ? _value.likeCount
           : likeCount // ignore: cast_nullable_to_non_nullable
               as int,
+      isLiked: null == isLiked
+          ? _value.isLiked
+          : isLiked // ignore: cast_nullable_to_non_nullable
+              as bool,
       createdAt: null == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -122,6 +122,7 @@ abstract class _$$StoryImplCopyWith<$Res> implements $StoryCopyWith<$Res> {
       String lead,
       String body,
       int likeCount,
+      bool isLiked,
       DateTime createdAt});
 }
 
@@ -144,6 +145,7 @@ class __$$StoryImplCopyWithImpl<$Res>
     Object? lead = null,
     Object? body = null,
     Object? likeCount = null,
+    Object? isLiked = null,
     Object? createdAt = null,
   }) {
     return _then(_$StoryImpl(
@@ -171,6 +173,10 @@ class __$$StoryImplCopyWithImpl<$Res>
           ? _value.likeCount
           : likeCount // ignore: cast_nullable_to_non_nullable
               as int,
+      isLiked: null == isLiked
+          ? _value.isLiked
+          : isLiked // ignore: cast_nullable_to_non_nullable
+              as bool,
       createdAt: null == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -180,8 +186,8 @@ class __$$StoryImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
-class _$StoryImpl implements _Story {
+
+class _$StoryImpl extends _Story {
   const _$StoryImpl(
       {required this.id,
       required this.trackId,
@@ -189,10 +195,9 @@ class _$StoryImpl implements _Story {
       required this.lead,
       required this.body,
       this.likeCount = 0,
-      required this.createdAt});
-
-  factory _$StoryImpl.fromJson(Map<String, dynamic> json) =>
-      _$$StoryImplFromJson(json);
+      this.isLiked = false,
+      required this.createdAt})
+      : super._();
 
   @override
   final String id;
@@ -208,11 +213,14 @@ class _$StoryImpl implements _Story {
   @JsonKey()
   final int likeCount;
   @override
+  @JsonKey()
+  final bool isLiked;
+  @override
   final DateTime createdAt;
 
   @override
   String toString() {
-    return 'Story(id: $id, trackId: $trackId, authorUserId: $authorUserId, lead: $lead, body: $body, likeCount: $likeCount, createdAt: $createdAt)';
+    return 'Story(id: $id, trackId: $trackId, authorUserId: $authorUserId, lead: $lead, body: $body, likeCount: $likeCount, isLiked: $isLiked, createdAt: $createdAt)';
   }
 
   @override
@@ -228,14 +236,14 @@ class _$StoryImpl implements _Story {
             (identical(other.body, body) || other.body == body) &&
             (identical(other.likeCount, likeCount) ||
                 other.likeCount == likeCount) &&
+            (identical(other.isLiked, isLiked) || other.isLiked == isLiked) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, id, trackId, authorUserId, lead, body, likeCount, createdAt);
+  int get hashCode => Object.hash(runtimeType, id, trackId, authorUserId, lead,
+      body, likeCount, isLiked, createdAt);
 
   /// Create a copy of Story
   /// with the given fields replaced by the non-null parameter values.
@@ -244,16 +252,9 @@ class _$StoryImpl implements _Story {
   @pragma('vm:prefer-inline')
   _$$StoryImplCopyWith<_$StoryImpl> get copyWith =>
       __$$StoryImplCopyWithImpl<_$StoryImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$StoryImplToJson(
-      this,
-    );
-  }
 }
 
-abstract class _Story implements Story {
+abstract class _Story extends Story {
   const factory _Story(
       {required final String id,
       required final String trackId,
@@ -261,9 +262,9 @@ abstract class _Story implements Story {
       required final String lead,
       required final String body,
       final int likeCount,
+      final bool isLiked,
       required final DateTime createdAt}) = _$StoryImpl;
-
-  factory _Story.fromJson(Map<String, dynamic> json) = _$StoryImpl.fromJson;
+  const _Story._() : super._();
 
   @override
   String get id;
@@ -277,6 +278,8 @@ abstract class _Story implements Story {
   String get body;
   @override
   int get likeCount;
+  @override
+  bool get isLiked;
   @override
   DateTime get createdAt;
 

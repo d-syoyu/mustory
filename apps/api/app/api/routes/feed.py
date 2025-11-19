@@ -11,7 +11,7 @@ from sqlalchemy import select, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Follow, Story, Track, User
-from app.db.session import get_db
+from app.dependencies.database import DbSession
 from app.dependencies.supabase_auth import CurrentUser
 
 router = APIRouter(prefix="/feed", tags=["feed"])
@@ -63,7 +63,7 @@ class FeedItem(BaseModel):
 @router.get("/following", response_model=list[FeedItem])
 async def get_following_feed(
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    db: DbSession,
     limit: int = 50,
     offset: int = 0,
 ) -> list[FeedItem]:

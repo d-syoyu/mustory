@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Follow, Story, Track, User
-from app.db.session import get_db
+from app.dependencies.database import DbSession
 from app.dependencies.supabase_auth import CurrentUser
 
 router = APIRouter(tags=["profiles"])
@@ -48,7 +48,7 @@ class FollowResponse(BaseModel):
 async def get_user_profile(
     user_id: UUID,
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    db: DbSession,
 ) -> UserProfile:
     """
     Get a user's profile with statistics and follow status.
@@ -112,7 +112,7 @@ async def get_user_profile(
 async def follow_user(
     user_id: UUID,
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    db: DbSession,
 ) -> FollowResponse:
     """
     Follow a user. Idempotent - returns success even if already following.
@@ -161,7 +161,7 @@ async def follow_user(
 async def unfollow_user(
     user_id: UUID,
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    db: DbSession,
 ) -> FollowResponse:
     """
     Unfollow a user. Idempotent - returns success even if not following.
@@ -192,7 +192,7 @@ async def unfollow_user(
 async def get_followers(
     user_id: UUID,
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    db: DbSession,
     limit: int = 50,
     offset: int = 0,
 ) -> list[UserSummary]:
@@ -234,7 +234,7 @@ async def get_followers(
 async def get_following(
     user_id: UUID,
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    db: DbSession,
     limit: int = 50,
     offset: int = 0,
 ) -> list[UserSummary]:

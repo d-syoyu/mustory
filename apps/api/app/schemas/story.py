@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -11,6 +12,7 @@ class StorySchema(BaseModel):
     body: str
     like_count: int
     is_liked: bool = False
+    created_at: datetime
 
 
 class StoryCreateSchema(BaseModel):

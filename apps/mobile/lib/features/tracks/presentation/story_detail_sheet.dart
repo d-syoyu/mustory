@@ -89,21 +89,69 @@ class StoryDetailSheet extends HookConsumerWidget {
                     ),
                     const SizedBox(height: 24),
 
-                    // Story metadata
+                    // Story actions (like and comment counts)
                     Row(
                       children: [
-                        Icon(Icons.favorite, size: 16, color: Colors.grey[600]),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${story['like_count'] ?? 0}',
-                          style: TextStyle(color: Colors.grey[600]),
+                        // Like button
+                        InkWell(
+                          onTap: () async {
+                            final storyId = story['id'] as String?;
+                            if (storyId == null) return;
+
+                            final isLiked = story['is_liked'] as bool? ?? false;
+                            if (isLiked) {
+                              await ref.read(trackDetailControllerProvider(trackId).notifier).unlikeStory(storyId);
+                            } else {
+                              await ref.read(trackDetailControllerProvider(trackId).notifier).likeStory(storyId);
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  (story['is_liked'] as bool? ?? false)
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  size: 20,
+                                  color: (story['is_liked'] as bool? ?? false)
+                                      ? Colors.red
+                                      : Colors.grey[600],
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${story['like_count'] ?? 0}',
+                                  style: TextStyle(
+                                    color: (story['is_liked'] as bool? ?? false)
+                                        ? Colors.red
+                                        : Colors.grey[600],
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        const SizedBox(width: 16),
-                        Icon(Icons.comment, size: 16, color: Colors.grey[600]),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${storyComments.length}',
-                          style: TextStyle(color: Colors.grey[600]),
+                        const SizedBox(width: 8),
+                        // Comment count
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.comment, size: 20, color: Colors.grey[600]),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${storyComments.length}',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -331,11 +379,37 @@ class StoryDetailSheet extends HookConsumerWidget {
                   ],
                 ),
               ),
-              Icon(Icons.favorite_border, size: 16, color: Colors.grey[600]),
-              const SizedBox(width: 4),
-              Text(
-                '${comment.likeCount}',
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              // Like button for comment
+              InkWell(
+                onTap: () async {
+                  await ref.read(trackDetailControllerProvider(trackId).notifier).setCommentLike(
+                        commentId: comment.id,
+                        isStoryComment: true,
+                        like: !comment.isLiked,
+                      );
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        comment.isLiked ? Icons.favorite : Icons.favorite_border,
+                        size: 16,
+                        color: comment.isLiked ? Colors.red : Colors.grey[600],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${comment.likeCount}',
+                        style: TextStyle(
+                          color: comment.isLiked ? Colors.red : Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

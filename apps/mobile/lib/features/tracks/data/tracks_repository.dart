@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:mustory_mobile/features/tracks/domain/track.dart';
 import 'package:mustory_mobile/features/tracks/domain/track_detail.dart';
 import 'package:mustory_mobile/features/tracks/domain/comment.dart';
+import 'package:mustory_mobile/features/story/domain/story.dart';
 
 class TracksRepository {
   final Dio _dio;
@@ -149,6 +150,22 @@ class TracksRepository {
     }
   }
 
+  Future<void> likeStory(String storyId) async {
+    try {
+      await _dio.post<void>('/stories/$storyId/like');
+    } on DioException catch (e) {
+      throw Exception('Failed to like story: ${e.message}');
+    }
+  }
+
+  Future<void> unlikeStory(String storyId) async {
+    try {
+      await _dio.delete<void>('/stories/$storyId/like');
+    } on DioException catch (e) {
+      throw Exception('Failed to unlike story: ${e.message}');
+    }
+  }
+
   Future<List<Track>> getLikedTracks({
     int limit = 20,
     int offset = 0,
@@ -261,6 +278,31 @@ class TracksRepository {
       return [];
     } on DioException catch (e) {
       throw Exception('Failed to search tracks: ${e.message}');
+    }
+  }
+
+  Future<List<Story>> getLikedStories({
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/stories/liked',
+        queryParameters: {
+          'limit': limit,
+          'offset': offset,
+        },
+      );
+
+      if (response.data is List) {
+        return (response.data as List)
+            .map((json) => Story.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+
+      return [];
+    } on DioException catch (e) {
+      throw Exception('Failed to load liked stories: ${e.message}');
     }
   }
 }

@@ -8,7 +8,7 @@ import 'package:mustory_mobile/features/profile/presentation/followers_page.dart
 import 'package:mustory_mobile/features/profile/presentation/following_page.dart';
 import 'package:mustory_mobile/features/tracks/presentation/track_detail_page.dart';
 import 'package:mustory_mobile/features/tracks/presentation/my_tracks_page.dart';
-import 'package:mustory_mobile/features/tracks/presentation/liked_tracks_page.dart';
+import 'package:mustory_mobile/features/tracks/presentation/liked_page.dart';
 import 'package:mustory_mobile/features/auth/presentation/login_page.dart';
 import 'package:mustory_mobile/features/auth/presentation/signup_page.dart';
 import 'package:mustory_mobile/features/upload/presentation/track_upload_page.dart';
@@ -68,7 +68,7 @@ final appRouterProvider = Provider<GoRouter>(
         GoRoute(
           path: '/liked-tracks',
           name: 'liked-tracks',
-          builder: (context, state) => const LikedTracksPage(),
+          builder: (context, state) => const LikedPage(),
         ),
         // User profile page
         GoRoute(

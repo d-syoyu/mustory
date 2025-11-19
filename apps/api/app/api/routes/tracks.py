@@ -64,6 +64,7 @@ def search_tracks(
 
     # Batch query for user's likes to avoid N+1 problem
     liked_track_ids: set[UUID] = set()
+    liked_story_ids: set[UUID] = set()
     if current_user:
         track_ids = [track.id for track in tracks]
         if track_ids:
@@ -75,8 +76,23 @@ def search_tracks(
             ).all()
             liked_track_ids = set(liked_tracks)
 
+        # Batch query for story likes
+        story_ids = [track.story.id for track in tracks if track.story]
+        if story_ids:
+            liked_stories = db.scalars(
+                select(models.LikeStory.story_id).where(
+                    models.LikeStory.user_id == current_user,
+                    models.LikeStory.story_id.in_(story_ids),
+                )
+            ).all()
+            liked_story_ids = set(liked_stories)
+
     return [
-        _map_track_with_like_status(track, _map_story(track.story), track.id in liked_track_ids)
+        _map_track_with_like_status(
+            track,
+            _map_story_with_like_status(track.story, track.story.id in liked_story_ids if track.story else False),
+            track.id in liked_track_ids
+        )
         for track in tracks
     ]
 
@@ -105,6 +121,7 @@ def list_tracks(
 
     # Batch query for user's likes to avoid N+1 problem
     liked_track_ids: set[UUID] = set()
+    liked_story_ids: set[UUID] = set()
     if current_user:
         track_ids = [track.id for track in tracks]
         if track_ids:
@@ -116,8 +133,23 @@ def list_tracks(
             ).all()
             liked_track_ids = set(liked_tracks)
 
+        # Batch query for story likes
+        story_ids = [track.story.id for track in tracks if track.story]
+        if story_ids:
+            liked_stories = db.scalars(
+                select(models.LikeStory.story_id).where(
+                    models.LikeStory.user_id == current_user,
+                    models.LikeStory.story_id.in_(story_ids),
+                )
+            ).all()
+            liked_story_ids = set(liked_stories)
+
     return [
-        _map_track_with_like_status(track, _map_story(track.story), track.id in liked_track_ids)
+        _map_track_with_like_status(
+            track,
+            _map_story_with_like_status(track.story, track.story.id in liked_story_ids if track.story else False),
+            track.id in liked_track_ids
+        )
         for track in tracks
     ]
 
@@ -160,8 +192,24 @@ def list_liked_tracks(
     ordered_tracks = [track_dict[track_id] for track_id in liked_track_ids if track_id in track_dict]
 
     # All tracks in this endpoint are liked by the current user
+    # Batch query for story likes
+    liked_story_ids: set[UUID] = set()
+    story_ids = [track.story.id for track in ordered_tracks if track.story]
+    if story_ids:
+        liked_stories = db.scalars(
+            select(models.LikeStory.story_id).where(
+                models.LikeStory.user_id == current_user.id,
+                models.LikeStory.story_id.in_(story_ids),
+            )
+        ).all()
+        liked_story_ids = set(liked_stories)
+
     return [
-        _map_track_with_like_status(track, _map_story(track.story), True)
+        _map_track_with_like_status(
+            track,
+            _map_story_with_like_status(track.story, track.story.id in liked_story_ids if track.story else False),
+            True
+        )
         for track in ordered_tracks
     ]
 
@@ -225,10 +273,23 @@ def get_recommended_tracks(
                 ).all()
             )
 
+    # Batch query for story likes
+    liked_story_ids: set[UUID] = set()
+    if current_user:
+        story_ids = [track.story.id for track in recommended_tracks if track.story]
+        if story_ids:
+            liked_stories = db.scalars(
+                select(models.LikeStory.story_id).where(
+                    models.LikeStory.user_id == current_user,
+                    models.LikeStory.story_id.in_(story_ids),
+                )
+            ).all()
+            liked_story_ids = set(liked_stories)
+
     return [
         _map_track_with_like_status(
             track,
-            _map_story(track.story),
+            _map_story_with_like_status(track.story, track.story.id in liked_story_ids if track.story else False),
             track.id in liked_track_ids,
         )
         for track in recommended_tracks
@@ -260,6 +321,7 @@ def list_my_tracks(
 
     # Check which tracks the user has liked
     liked_track_ids: set[UUID] = set()
+    liked_story_ids: set[UUID] = set()
     if tracks:
         track_ids = [track.id for track in tracks]
         liked_tracks = db.scalars(
@@ -270,8 +332,23 @@ def list_my_tracks(
         ).all()
         liked_track_ids = set(liked_tracks)
 
+        # Batch query for story likes
+        story_ids = [track.story.id for track in tracks if track.story]
+        if story_ids:
+            liked_stories = db.scalars(
+                select(models.LikeStory.story_id).where(
+                    models.LikeStory.user_id == current_user.id,
+                    models.LikeStory.story_id.in_(story_ids),
+                )
+            ).all()
+            liked_story_ids = set(liked_stories)
+
     return [
-        _map_track_with_like_status(track, _map_story(track.story), track.id in liked_track_ids)
+        _map_track_with_like_status(
+            track,
+            _map_story_with_like_status(track.story, track.story.id in liked_story_ids if track.story else False),
+            track.id in liked_track_ids
+        )
         for track in tracks
     ]
 
@@ -324,7 +401,7 @@ def update_track(
     db.commit()
     db.refresh(track)
 
-    story_schema = _map_story(track.story) if track.story else None
+    story_schema = _map_story(track.story, current_user.id, db) if track.story else None
     return _map_track(track, story_schema, current_user.id, db)
 
 
@@ -360,7 +437,7 @@ def get_track_detail(
     if not track:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Track not found.")
 
-    story_schema = _map_story(track.story) if track.story else None
+    story_schema = _map_story(track.story, current_user, db) if track.story else None
     track_comments_rows = list(
         db.scalars(
             select(models.Comment)
@@ -620,9 +697,25 @@ def _map_track(
     )
 
 
-def _map_story(story: models.Story | None) -> StorySchema | None:
+def _map_story(
+    story: models.Story | None,
+    current_user: UUID | None = None,
+    db: DbSession | None = None,
+) -> StorySchema | None:
     if story is None:
         return None
+
+    # Check if current user has liked this story
+    is_liked = False
+    if current_user and db:
+        existing_like = db.scalar(
+            select(models.LikeStory).where(
+                models.LikeStory.user_id == current_user,
+                models.LikeStory.story_id == story.id,
+            )
+        )
+        is_liked = existing_like is not None
+
     return StorySchema(
         id=story.id,
         track_id=story.track_id,
@@ -630,6 +723,28 @@ def _map_story(story: models.Story | None) -> StorySchema | None:
         lead=story.lead,
         body=story.body,
         like_count=story.like_count,
+        is_liked=is_liked,
+        created_at=story.created_at,
+    )
+
+
+def _map_story_with_like_status(
+    story: models.Story | None,
+    is_liked: bool = False,
+) -> StorySchema | None:
+    """Map story with pre-computed like status (for batch operations)."""
+    if story is None:
+        return None
+
+    return StorySchema(
+        id=story.id,
+        track_id=story.track_id,
+        author_user_id=story.author_user_id,
+        lead=story.lead,
+        body=story.body,
+        like_count=story.like_count,
+        is_liked=is_liked,
+        created_at=story.created_at,
     )
 
 
