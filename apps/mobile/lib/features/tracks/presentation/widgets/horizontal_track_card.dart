@@ -40,6 +40,7 @@ class HorizontalTrackCard extends ConsumerWidget {
                     imageUrl: track.artworkUrl,
                     height: 190,
                     width: 190,
+                    memCacheWidth: 400,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(
                       height: 190,

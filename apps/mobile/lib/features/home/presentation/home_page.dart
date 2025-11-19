@@ -113,7 +113,7 @@ class HomePage extends HookConsumerWidget {
                                   return HorizontalTrackCard(
                                     track: track,
                                     onTap: () {
-                                      context.go('/tracks/${track.id}');
+                                      context.go('/tracks/${track.id}', extra: track);
                                     },
                                   );
                                 },
@@ -217,7 +217,7 @@ class HomePage extends HookConsumerWidget {
                                   return HorizontalTrackCard(
                                     track: item.track!,
                                     onTap: () {
-                                      context.go('/tracks/${item.track!.id}');
+                                      context.go('/tracks/${item.track!.id}', extra: item.track);
                                     },
                                   );
                                 }
@@ -372,7 +372,7 @@ class HomePage extends HookConsumerWidget {
                             return TrackCard(
                               track: track,
                               onTap: () {
-                                context.go('/tracks/${track.id}');
+                                context.go('/tracks/${track.id}', extra: track);
                               },
                               onLike: () {
                                 final notifier =

@@ -12,9 +12,14 @@ import 'comments_detail_sheet.dart';
 import 'widgets/track_edit_dialog.dart';
 
 class TrackDetailPage extends HookConsumerWidget {
-  const TrackDetailPage({super.key, required this.trackId});
+  const TrackDetailPage({
+    super.key,
+    required this.trackId,
+    this.initialTrack,
+  });
 
   final String trackId;
+  final Track? initialTrack;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,14 +33,17 @@ class TrackDetailPage extends HookConsumerWidget {
     );
     final isAuthenticated = currentUserId != null;
 
-    if (state.isLoading && state.trackDetail == null) {
+    // Use initialTrack for optimistic UI if available, otherwise use loaded detail
+    final displayTrack = state.trackDetail?.track ?? initialTrack;
+
+    if (displayTrack == null && state.isLoading) {
       return Scaffold(
         appBar: AppBar(title: const Text('読み込み中...')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (state.error != null && state.trackDetail == null) {
+    if (displayTrack == null && state.error != null) {
       return Scaffold(
         appBar: AppBar(title: const Text('エラー')),
         body: Center(
@@ -60,8 +68,10 @@ class TrackDetailPage extends HookConsumerWidget {
       );
     }
 
-    final detail = state.trackDetail!;
-    final track = detail.track;
+    // If we have displayTrack but no detail yet (optimistic state), we can show basic info
+    // If we have detail, we show full info
+    final detail = state.trackDetail;
+    final track = displayTrack!;
     final isPlaying =
         audioState.currentTrack?.id == track.id && audioState.isPlaying;
     final isCurrentTrack = audioState.currentTrack?.id == track.id;
@@ -191,7 +201,7 @@ class TrackDetailPage extends HookConsumerWidget {
   Widget _buildSongTab(
     BuildContext context,
     WidgetRef ref,
-    dynamic track,
+    Track track,
     dynamic detail,
     dynamic audioState,
     bool isPlaying,
@@ -437,7 +447,7 @@ class TrackDetailPage extends HookConsumerWidget {
                   return;
                 }
                 final controller =
-                    ref.read(trackDetailControllerProvider(trackId).notifier);
+                    ref.read(trackDetailControllerProvider(track.id).notifier);
                 if (track.isLiked) {
                   controller.unlikeTrack();
                 } else {
@@ -460,19 +470,23 @@ class TrackDetailPage extends HookConsumerWidget {
                   _promptLogin(context);
                   return;
                 }
-                showModalBottomSheet<void>(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => CommentsDetailSheet(
-                    trackId: trackId,
-                    trackComments: detail.trackComments,
-                  ),
-                );
+                // 詳細がロードされるまではコメントシートを開けない、または空で開く
+                // ここでは詳細ロード済みの場合のみ開くようにする
+                if (detail != null) {
+                  showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => CommentsDetailSheet(
+                      trackId: track.id,
+                      trackComments: detail.trackComments,
+                    ),
+                  );
+                }
               },
             ),
             Text(
-              '${detail.trackComments.length}',
+              detail != null ? '${detail.trackComments.length}' : '-',
               style: const TextStyle(fontSize: 14),
             ),
             const SizedBox(width: 24),
@@ -588,7 +602,7 @@ class TrackDetailPage extends HookConsumerWidget {
               Icon(Icons.comment, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 4),
               Text(
-                '${detail.storyComments.length}',
+                detail != null ? '${detail.storyComments.length}' : '-',
                 style: TextStyle(color: Colors.grey[600]),
               ),
               const Spacer(),
@@ -598,16 +612,18 @@ class TrackDetailPage extends HookConsumerWidget {
                     _promptLogin(context);
                     return;
                   }
-                  showModalBottomSheet<void>(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => StoryDetailSheet(
-                      trackId: trackId,
-                      story: story,
-                      storyComments: detail.storyComments,
-                    ),
-                  );
+                  if (detail != null) {
+                    showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => StoryDetailSheet(
+                        trackId: track.id,
+                        story: story,
+                        storyComments: detail.storyComments,
+                      ),
+                    );
+                  }
                 },
                 icon: const Icon(Icons.comment_outlined, size: 20),
                 label: const Text('コメント'),

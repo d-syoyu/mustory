@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from typing import Iterable
 from uuid import UUID
 
@@ -26,6 +27,10 @@ from ...services.queue import enqueue_track_processing
 from ...services.recommendations import RecommendationService
 
 router = APIRouter(prefix="/tracks", tags=["tracks"])
+
+# Simple TTL cache for recommendations
+_recommendation_cache: dict[tuple[UUID | None, int], tuple[list[models.Track], datetime]] = {}
+_CACHE_TTL = timedelta(minutes=5)
 
 
 @router.get("/search", response_model=list[TrackSchema])
@@ -177,11 +182,33 @@ def get_recommended_tracks(
 
     When the listener is not authenticated, this falls back to global popularity/recency.
     """
-    recommender = RecommendationService(db)
-    recommended_tracks = recommender.recommend_tracks(
-        user_id=current_user,
-        limit=limit,
-    )
+    # Check cache first
+    cache_key = (current_user, limit)
+    now = datetime.now()
+
+    if cache_key in _recommendation_cache:
+        cached_tracks, cached_time = _recommendation_cache[cache_key]
+        if now - cached_time < _CACHE_TTL:
+            # Cache hit - use cached results
+            recommended_tracks = cached_tracks
+        else:
+            # Cache expired - remove and fetch new
+            del _recommendation_cache[cache_key]
+            recommender = RecommendationService(db)
+            recommended_tracks = recommender.recommend_tracks(
+                user_id=current_user,
+                limit=limit,
+            )
+            _recommendation_cache[cache_key] = (recommended_tracks, now)
+    else:
+        # Cache miss - fetch and cache
+        recommender = RecommendationService(db)
+        recommended_tracks = recommender.recommend_tracks(
+            user_id=current_user,
+            limit=limit,
+        )
+        _recommendation_cache[cache_key] = (recommended_tracks, now)
+
     if not recommended_tracks:
         return []
 

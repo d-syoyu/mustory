@@ -1,21 +1,13 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:mustory_mobile/core/network/api_client.dart';
-import 'package:mustory_mobile/features/tracks/data/tracks_repository.dart';
-import 'package:mustory_mobile/features/tracks/domain/track.dart';
+import 'package:mustory_mobile/features/tracks/application/tracks_controller.dart';
 import 'package:mustory_mobile/features/tracks/application/tracks_state.dart';
+import 'package:mustory_mobile/features/tracks/data/tracks_repository.dart';
 
-// Repository Provider
-final tracksRepositoryProvider = Provider<TracksRepository>((ref) {
-  final dio = ref.watch(dioProvider);
-  return TracksRepository(dio);
-});
-
-// Tracks Controller
-class TracksController extends StateNotifier<TracksState> {
+class LikedTracksController extends StateNotifier<TracksState> {
   final TracksRepository _repository;
   static const int _pageSize = 20;
 
-  TracksController(this._repository) : super(TracksState()) {
+  LikedTracksController(this._repository) : super(TracksState()) {
     loadTracks();
   }
 
@@ -30,7 +22,7 @@ class TracksController extends StateNotifier<TracksState> {
 
     try {
       final offset = refresh ? 0 : state.tracks.length;
-      final newTracks = await _repository.getTracks(
+      final newTracks = await _repository.getLikedTracks(
         limit: _pageSize,
         offset: offset,
       );
@@ -52,8 +44,8 @@ class TracksController extends StateNotifier<TracksState> {
       String errorMessage = 'トラックの読み込みに失敗しました';
       if (e.toString().contains('timeout')) {
         errorMessage = 'サーバーへの接続がタイムアウトしました\nネットワーク接続を確認してください';
-      } else if (e.toString().contains('Failed to load tracks')) {
-        errorMessage = 'トラックの取得中にエラーが発生しました';
+      } else if (e.toString().contains('Failed to load liked tracks')) {
+        errorMessage = 'いいねした曲の取得中にエラーが発生しました';
       }
 
       state = state.copyWith(
@@ -72,54 +64,20 @@ class TracksController extends StateNotifier<TracksState> {
     await loadTracks(refresh: true);
   }
 
-  Future<void> likeTrack(String trackId) async {
-    try {
-      await _repository.likeTrack(trackId);
-
-      // Update local state
-      final updatedTracks = state.tracks.map((track) {
-        if (track.id == trackId) {
-          return track.copyWith(
-            likeCount: track.likeCount + 1,
-            isLiked: true,
-          );
-        }
-        return track;
-      }).toList();
-
-      state = state.copyWith(tracks: updatedTracks);
-    } catch (e) {
-      // Handle error
-      state = state.copyWith(error: e.toString());
-    }
-  }
-
   Future<void> unlikeTrack(String trackId) async {
     try {
       await _repository.unlikeTrack(trackId);
-
-      // Update local state
-      final updatedTracks = state.tracks.map((track) {
-        if (track.id == trackId) {
-          return track.copyWith(
-            likeCount: track.likeCount - 1,
-            isLiked: false,
-          );
-        }
-        return track;
-      }).toList();
-
+      // Remove from list immediately as it's no longer liked
+      final updatedTracks = state.tracks.where((t) => t.id != trackId).toList();
       state = state.copyWith(tracks: updatedTracks);
     } catch (e) {
-      // Handle error
-      state = state.copyWith(error: e.toString());
+       // Handle error
     }
   }
 }
 
-// Tracks Controller Provider
-final tracksControllerProvider =
-    StateNotifierProvider<TracksController, TracksState>((ref) {
+final likedTracksControllerProvider =
+    StateNotifierProvider<LikedTracksController, TracksState>((ref) {
   final repository = ref.watch(tracksRepositoryProvider);
-  return TracksController(repository);
+  return LikedTracksController(repository);
 });

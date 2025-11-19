@@ -41,6 +41,7 @@ class TrackCard extends ConsumerWidget {
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: double.infinity,
+                    memCacheWidth: 600,
                     placeholder: (context, url) => Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
