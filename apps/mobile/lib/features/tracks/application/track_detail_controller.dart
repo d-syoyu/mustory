@@ -2,6 +2,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mustory_mobile/features/tracks/data/tracks_repository.dart';
 import 'package:mustory_mobile/features/tracks/domain/track_detail.dart';
 import 'package:mustory_mobile/features/tracks/application/tracks_controller.dart';
+import 'package:mustory_mobile/features/tracks/domain/comment.dart';
 
 // Track Detail State
 class TrackDetailState {
@@ -136,6 +137,82 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
       await loadTrackDetail();
     } catch (e) {
       state = state.copyWith(error: 'ストーリーコメントの投稿に失敗しました');
+    }
+  }
+
+  Future<void> updateTrack({
+    required String title,
+    required String artistName,
+    String? storyLead,
+    String? storyBody,
+  }) async {
+    final currentDetail = state.trackDetail;
+    if (currentDetail == null) return;
+
+    try {
+      final updatedTrack = await _repository.updateTrack(
+        trackId,
+        title: title,
+        artistName: artistName,
+        storyLead: storyLead,
+        storyBody: storyBody,
+      );
+
+      state = state.copyWith(
+        trackDetail: currentDetail.copyWith(track: updatedTrack),
+        error: null,
+      );
+    } catch (e) {
+      state = state.copyWith(error: 'トラックの更新に失敗しました');
+      rethrow;
+    }
+  }
+
+  Future<void> setCommentLike({
+    required String commentId,
+    required bool isStoryComment,
+    required bool like,
+  }) async {
+    final currentDetail = state.trackDetail;
+    if (currentDetail == null) return;
+
+    try {
+      if (like) {
+        await _repository.likeComment(commentId);
+      } else {
+        await _repository.unlikeComment(commentId);
+      }
+
+      List<Comment> _update(
+        List<Comment> comments,
+      ) {
+        return comments
+            .map(
+              (c) => c.id == commentId
+                  ? c.copyWith(
+                      isLiked: like,
+                      likeCount: like
+                          ? c.likeCount + 1
+                          : (c.likeCount - 1 < 0 ? 0 : c.likeCount - 1),
+                    )
+                  : c,
+            )
+            .toList();
+      }
+
+      state = state.copyWith(
+        trackDetail: currentDetail.copyWith(
+          trackComments: isStoryComment
+              ? currentDetail.trackComments
+              : _update(currentDetail.trackComments),
+          storyComments: isStoryComment
+              ? _update(currentDetail.storyComments)
+              : currentDetail.storyComments,
+        ),
+      );
+    } catch (e) {
+      state = state.copyWith(error: 'コメントのいいね操作に失敗しました');
+      rethrow;
     }
   }
 }

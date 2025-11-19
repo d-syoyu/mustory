@@ -13,7 +13,7 @@ class TracksRepository {
     int offset = 0,
   }) async {
     try {
-      final response = await _dio.get(
+      final response = await _dio.get<List<dynamic>>(
         '/tracks/',
         queryParameters: {
           'limit': limit,
@@ -37,7 +37,7 @@ class TracksRepository {
     int limit = 20,
   }) async {
     try {
-      final response = await _dio.get(
+      final response = await _dio.get<List<dynamic>>(
         '/tracks/recommendations',
         queryParameters: {
           'limit': limit,
@@ -58,7 +58,7 @@ class TracksRepository {
 
   Future<TrackDetail> getTrackDetail(String id) async {
     try {
-      final response = await _dio.get('/tracks/$id');
+      final response = await _dio.get<Map<String, dynamic>>('/tracks/$id');
       return TrackDetail.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception('Failed to load track detail: ${e.message}');
@@ -67,7 +67,7 @@ class TracksRepository {
 
   Future<List<Comment>> getTrackComments(String trackId) async {
     try {
-      final response = await _dio.get('/tracks/$trackId/comments');
+      final response = await _dio.get<List<dynamic>>('/tracks/$trackId/comments');
       if (response.data is List) {
         return (response.data as List)
             .map((json) => Comment.fromJson(json as Map<String, dynamic>))
@@ -114,6 +114,22 @@ class TracksRepository {
       return Comment.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception('Failed to create story comment: ${e.message}');
+    }
+  }
+
+  Future<void> likeComment(String commentId) async {
+    try {
+      await _dio.post<void>('/comments/$commentId/like');
+    } on DioException catch (e) {
+      throw Exception('Failed to like comment: ${e.message}');
+    }
+  }
+
+  Future<void> unlikeComment(String commentId) async {
+    try {
+      await _dio.delete<void>('/comments/$commentId/like');
+    } on DioException catch (e) {
+      throw Exception('Failed to unlike comment: ${e.message}');
     }
   }
 
@@ -211,6 +227,40 @@ class TracksRepository {
       await _dio.delete<void>('/tracks/$trackId');
     } on DioException catch (e) {
       throw Exception('Failed to delete track: ${e.message}');
+    }
+  }
+
+  Future<void> incrementViewCount(String trackId) async {
+    try {
+      await _dio.post<void>('/tracks/$trackId/view');
+    } on DioException {
+      // Silently fail - view count increment is not critical
+      // We don't want to block playback if this fails
+    }
+  }
+
+  Future<List<Track>> searchTracks({
+    required String query,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/tracks/search',
+        queryParameters: {
+          'q': query,
+          'limit': limit,
+        },
+      );
+
+      if (response.data is List) {
+        return (response.data as List)
+            .map((json) => Track.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+
+      return [];
+    } on DioException catch (e) {
+      throw Exception('Failed to search tracks: ${e.message}');
     }
   }
 }

@@ -27,13 +27,7 @@ class UploadRepository {
     required File file,
     required void Function(double) onProgress,
   }) async {
-    print('=== S3 Upload Debug ===');
-    print('URL: $presignedUrl');
-
     final fileBytes = await file.readAsBytes();
-    print('File size: ${fileBytes.length} bytes');
-
-    print('Sending PUT request to S3...');
 
     // Report initial progress
     onProgress(0.0);
@@ -47,14 +41,9 @@ class UploadRepository {
       },
     );
 
-    print('S3 Response status: ${response.statusCode}');
-    print('S3 Response body: ${response.body}');
-
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Upload failed: ${response.statusCode} ${response.body}');
     }
-
-    print('S3 Upload successful!');
 
     // Report completion
     onProgress(1.0);

@@ -31,7 +31,9 @@
       "Bash(flutter run:*)",
       "Bash(nc:*)",
       "Bash(timeout 5 nc:*)",
-      "Bash(flutter pub run build_runner build:*)"
+      "Bash(flutter pub run build_runner build:*)",
+      "Bash(timeout 20 bash -c:*)",
+      "Bash(flutter devices:*)"
     ],
     "deny": [],
     "ask": []

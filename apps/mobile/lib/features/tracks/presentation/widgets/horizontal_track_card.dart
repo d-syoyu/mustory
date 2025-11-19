@@ -20,13 +20,14 @@ class HorizontalTrackCard extends ConsumerWidget {
     final audioState = ref.watch(audioPlayerControllerProvider);
     final isCurrentTrack = audioState.currentTrack?.id == track.id;
     final isPlaying = isCurrentTrack && audioState.isPlaying;
+    final theme = Theme.of(context);
 
     return Container(
-      width: 180,
-      margin: const EdgeInsets.only(right: 12),
+      width: 190,
+      margin: const EdgeInsets.only(right: 14),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -34,28 +35,46 @@ class HorizontalTrackCard extends ConsumerWidget {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(16),
                   child: CachedNetworkImage(
                     imageUrl: track.artworkUrl,
-                    height: 180,
-                    width: 180,
+                    height: 190,
+                    width: 190,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(
-                      height: 180,
-                      width: 180,
-                      color: Colors.grey[800],
+                      height: 190,
+                      width: 190,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            theme.colorScheme.surfaceContainerHighest,
+                            theme.colorScheme.surfaceContainerLow,
+                          ],
+                        ),
+                      ),
                       child: const Center(
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
                     errorWidget: (context, url, error) => Container(
-                      height: 180,
-                      width: 180,
-                      color: Colors.grey[800],
-                      child: const Icon(
-                        Icons.music_note,
-                        size: 48,
-                        color: Colors.grey,
+                      height: 190,
+                      width: 190,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            theme.colorScheme.surfaceContainerHighest,
+                            theme.colorScheme.surfaceContainerLow,
+                          ],
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.music_note_rounded,
+                        size: 56,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
                       ),
                     ),
                   ),
@@ -66,7 +85,7 @@ class HorizontalTrackCard extends ConsumerWidget {
                   Positioned.fill(
                     child: Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(16),
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -78,12 +97,24 @@ class HorizontalTrackCard extends ConsumerWidget {
                       ),
                       child: Align(
                         alignment: Alignment.bottomRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Icon(
-                            Icons.equalizer,
-                            color: Theme.of(context).colorScheme.primary,
-                            size: 20,
+                        child: Container(
+                          margin: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                                blurRadius: 6,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.equalizer_rounded,
+                            color: Colors.white,
+                            size: 16,
                           ),
                         ),
                       ),
@@ -93,22 +124,28 @@ class HorizontalTrackCard extends ConsumerWidget {
                 // Story badge
                 if (track.hasStory)
                   Positioned(
-                    top: 8,
-                    right: 8,
+                    top: 10,
+                    right: 10,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 4,
+                        horizontal: 8,
+                        vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        borderRadius: BorderRadius.circular(4),
+                        color: theme.colorScheme.tertiary,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.25),
+                            blurRadius: 4,
+                          ),
+                        ],
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.book,
+                            Icons.menu_book_rounded,
                             size: 12,
                             color: Colors.white,
                           ),
@@ -119,25 +156,28 @@ class HorizontalTrackCard extends ConsumerWidget {
               ],
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
             // Title
             Text(
               track.title,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
                   ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
 
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
 
             // Artist
             Text(
               track.artistName,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
+              style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
                   ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

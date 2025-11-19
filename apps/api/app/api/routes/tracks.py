@@ -4,7 +4,7 @@ from typing import Iterable
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import select, String
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
@@ -26,6 +26,54 @@ from ...services.queue import enqueue_track_processing
 from ...services.recommendations import RecommendationService
 
 router = APIRouter(prefix="/tracks", tags=["tracks"])
+
+
+@router.get("/search", response_model=list[TrackSchema])
+def search_tracks(
+    q: str = Query(..., min_length=1, description="Search query"),
+    db: DbSession = None,
+    current_user: OptionalCurrentUser = None,
+    limit: int = Query(default=20, ge=1, le=100, description="Number of tracks to return"),
+) -> list[TrackSchema]:
+    """
+    Search tracks by title, artist name, or tags.
+
+    - **q**: Search query (required, min 1 character)
+    - **limit**: Maximum number of tracks to return (1-100, default 20)
+    - Returns tracks matching the query, ordered by relevance and recency
+    """
+    search_pattern = f"%{q}%"
+
+    # Search in title, artist_name, and tags
+    tracks = db.scalars(
+        select(models.Track)
+        .options(selectinload(models.Track.story))
+        .where(
+            (models.Track.title.ilike(search_pattern)) |
+            (models.Track.artist_name.ilike(search_pattern)) |
+            (models.Track.tags.cast(String).ilike(search_pattern))
+        )
+        .order_by(models.Track.created_at.desc())
+        .limit(limit)
+    ).all()
+
+    # Batch query for user's likes to avoid N+1 problem
+    liked_track_ids: set[UUID] = set()
+    if current_user:
+        track_ids = [track.id for track in tracks]
+        if track_ids:
+            liked_tracks = db.scalars(
+                select(models.LikeTrack.track_id).where(
+                    models.LikeTrack.user_id == current_user,
+                    models.LikeTrack.track_id.in_(track_ids),
+                )
+            ).all()
+            liked_track_ids = set(liked_tracks)
+
+    return [
+        _map_track_with_like_status(track, _map_story(track.story), track.id in liked_track_ids)
+        for track in tracks
+    ]
 
 
 @router.get("/", response_model=list[TrackSchema])
@@ -462,6 +510,23 @@ def unlike_track(
     return {"message": "Track unliked successfully."}
 
 
+@router.post("/{track_id}/view", status_code=status.HTTP_200_OK)
+def increment_track_view(
+    track_id: UUID,
+    db: DbSession,
+) -> dict:
+    """Increment view count when a track is played."""
+    track = db.get(models.Track, track_id)
+    if not track:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Track not found.")
+
+    # Increment view_count
+    track.view_count += 1
+    db.commit()
+
+    return {"message": "View counted successfully.", "view_count": track.view_count}
+
+
 def _map_track_with_like_status(
     track: models.Track,
     story_schema: StorySchema | None,
@@ -705,7 +770,11 @@ def complete_track_upload(
         )
 
     # Enqueue FFmpeg processing job to Redis/RQ
-    enqueue_track_processing(str(track.id))
+    job_id = enqueue_track_processing(str(track.id))
+
+    # Save job_id to track for progress tracking
+    track.job_id = job_id
+    db.commit()
 
     return {"message": "Track upload completed, processing started."}
 
@@ -724,10 +793,16 @@ def get_track_processing_status(
     if track.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized.")
 
+    # Get progress from Redis job if available
+    progress = None
+    if track.job_id:
+        from ...services.queue import get_job_progress
+        progress = get_job_progress(track.job_id)
+
     return TrackProcessingStatusResponse(
         track_id=track.id,
         status=track.processing_status.value,
-        progress=None,  # TODO: Get from Redis job status
+        progress=progress,
         error=track.processing_error,
     )
 

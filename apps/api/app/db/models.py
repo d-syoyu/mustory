@@ -64,6 +64,7 @@ class Track(Base):
         SqlEnum(TrackProcessingStatus), default=TrackProcessingStatus.PENDING
     )
     processing_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    job_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
     bpm: Mapped[float | None] = mapped_column(Float, nullable=True)
     loudness_lufs: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -201,6 +202,27 @@ class LikeComment(Base):
         UUID(as_uuid=True),
         ForeignKey("comments.id", ondelete="CASCADE"),
         nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow
+    )
+
+
+class Follow(Base):
+    __tablename__ = "follows"
+    __table_args__ = (
+        UniqueConstraint("follower_id", "followee_id", name="unique_follow"),
+    )
+
+    follower_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    followee_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow

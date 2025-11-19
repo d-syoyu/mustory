@@ -24,6 +24,8 @@ mixin _$Track {
   String get hlsUrl => throw _privateConstructorUsedError;
   int get likeCount => throw _privateConstructorUsedError;
   int get viewCount => throw _privateConstructorUsedError;
+  int get trackCommentCount => throw _privateConstructorUsedError;
+  int get storyCommentCount => throw _privateConstructorUsedError;
   bool get isLiked => throw _privateConstructorUsedError;
   Map<String, dynamic>? get story => throw _privateConstructorUsedError;
 
@@ -47,6 +49,8 @@ abstract class $TrackCopyWith<$Res> {
       String hlsUrl,
       int likeCount,
       int viewCount,
+      int trackCommentCount,
+      int storyCommentCount,
       bool isLiked,
       Map<String, dynamic>? story});
 }
@@ -74,6 +78,8 @@ class _$TrackCopyWithImpl<$Res, $Val extends Track>
     Object? hlsUrl = null,
     Object? likeCount = null,
     Object? viewCount = null,
+    Object? trackCommentCount = null,
+    Object? storyCommentCount = null,
     Object? isLiked = null,
     Object? story = freezed,
   }) {
@@ -110,6 +116,14 @@ class _$TrackCopyWithImpl<$Res, $Val extends Track>
           ? _value.viewCount
           : viewCount // ignore: cast_nullable_to_non_nullable
               as int,
+      trackCommentCount: null == trackCommentCount
+          ? _value.trackCommentCount
+          : trackCommentCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      storyCommentCount: null == storyCommentCount
+          ? _value.storyCommentCount
+          : storyCommentCount // ignore: cast_nullable_to_non_nullable
+              as int,
       isLiked: null == isLiked
           ? _value.isLiked
           : isLiked // ignore: cast_nullable_to_non_nullable
@@ -138,6 +152,8 @@ abstract class _$$TrackImplCopyWith<$Res> implements $TrackCopyWith<$Res> {
       String hlsUrl,
       int likeCount,
       int viewCount,
+      int trackCommentCount,
+      int storyCommentCount,
       bool isLiked,
       Map<String, dynamic>? story});
 }
@@ -163,6 +179,8 @@ class __$$TrackImplCopyWithImpl<$Res>
     Object? hlsUrl = null,
     Object? likeCount = null,
     Object? viewCount = null,
+    Object? trackCommentCount = null,
+    Object? storyCommentCount = null,
     Object? isLiked = null,
     Object? story = freezed,
   }) {
@@ -199,6 +217,14 @@ class __$$TrackImplCopyWithImpl<$Res>
           ? _value.viewCount
           : viewCount // ignore: cast_nullable_to_non_nullable
               as int,
+      trackCommentCount: null == trackCommentCount
+          ? _value.trackCommentCount
+          : trackCommentCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      storyCommentCount: null == storyCommentCount
+          ? _value.storyCommentCount
+          : storyCommentCount // ignore: cast_nullable_to_non_nullable
+              as int,
       isLiked: null == isLiked
           ? _value.isLiked
           : isLiked // ignore: cast_nullable_to_non_nullable
@@ -223,6 +249,8 @@ class _$TrackImpl extends _Track {
       required this.hlsUrl,
       this.likeCount = 0,
       this.viewCount = 0,
+      this.trackCommentCount = 0,
+      this.storyCommentCount = 0,
       this.isLiked = false,
       final Map<String, dynamic>? story})
       : _story = story,
@@ -248,6 +276,12 @@ class _$TrackImpl extends _Track {
   final int viewCount;
   @override
   @JsonKey()
+  final int trackCommentCount;
+  @override
+  @JsonKey()
+  final int storyCommentCount;
+  @override
+  @JsonKey()
   final bool isLiked;
   final Map<String, dynamic>? _story;
   @override
@@ -261,7 +295,7 @@ class _$TrackImpl extends _Track {
 
   @override
   String toString() {
-    return 'Track(id: $id, title: $title, artistName: $artistName, userId: $userId, artworkUrl: $artworkUrl, hlsUrl: $hlsUrl, likeCount: $likeCount, viewCount: $viewCount, isLiked: $isLiked, story: $story)';
+    return 'Track(id: $id, title: $title, artistName: $artistName, userId: $userId, artworkUrl: $artworkUrl, hlsUrl: $hlsUrl, likeCount: $likeCount, viewCount: $viewCount, trackCommentCount: $trackCommentCount, storyCommentCount: $storyCommentCount, isLiked: $isLiked, story: $story)';
   }
 
   @override
@@ -281,6 +315,10 @@ class _$TrackImpl extends _Track {
                 other.likeCount == likeCount) &&
             (identical(other.viewCount, viewCount) ||
                 other.viewCount == viewCount) &&
+            (identical(other.trackCommentCount, trackCommentCount) ||
+                other.trackCommentCount == trackCommentCount) &&
+            (identical(other.storyCommentCount, storyCommentCount) ||
+                other.storyCommentCount == storyCommentCount) &&
             (identical(other.isLiked, isLiked) || other.isLiked == isLiked) &&
             const DeepCollectionEquality().equals(other._story, _story));
   }
@@ -296,6 +334,8 @@ class _$TrackImpl extends _Track {
       hlsUrl,
       likeCount,
       viewCount,
+      trackCommentCount,
+      storyCommentCount,
       isLiked,
       const DeepCollectionEquality().hash(_story));
 
@@ -318,6 +358,8 @@ abstract class _Track extends Track {
       required final String hlsUrl,
       final int likeCount,
       final int viewCount,
+      final int trackCommentCount,
+      final int storyCommentCount,
       final bool isLiked,
       final Map<String, dynamic>? story}) = _$TrackImpl;
   const _Track._() : super._();
@@ -338,6 +380,10 @@ abstract class _Track extends Track {
   int get likeCount;
   @override
   int get viewCount;
+  @override
+  int get trackCommentCount;
+  @override
+  int get storyCommentCount;
   @override
   bool get isLiked;
   @override

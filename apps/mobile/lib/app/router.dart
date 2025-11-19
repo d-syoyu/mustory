@@ -3,6 +3,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:mustory_mobile/features/home/presentation/home_page.dart';
 import 'package:mustory_mobile/features/profile/presentation/my_page.dart';
+import 'package:mustory_mobile/features/profile/presentation/user_profile_page.dart';
+import 'package:mustory_mobile/features/profile/presentation/followers_page.dart';
+import 'package:mustory_mobile/features/profile/presentation/following_page.dart';
 import 'package:mustory_mobile/features/tracks/presentation/track_detail_page.dart';
 import 'package:mustory_mobile/features/tracks/presentation/my_tracks_page.dart';
 import 'package:mustory_mobile/features/tracks/presentation/liked_tracks_page.dart';
@@ -66,6 +69,33 @@ final appRouterProvider = Provider<GoRouter>(
           path: '/liked-tracks',
           name: 'liked-tracks',
           builder: (context, state) => const LikedTracksPage(),
+        ),
+        // User profile page
+        GoRoute(
+          path: '/users/:userId',
+          name: 'user-profile',
+          builder: (context, state) {
+            final userId = state.pathParameters['userId']!;
+            return UserProfilePage(userId: userId);
+          },
+        ),
+        // Followers page
+        GoRoute(
+          path: '/users/:userId/followers',
+          name: 'followers',
+          builder: (context, state) {
+            final userId = state.pathParameters['userId']!;
+            return FollowersPage(userId: userId);
+          },
+        ),
+        // Following page
+        GoRoute(
+          path: '/users/:userId/following',
+          name: 'following',
+          builder: (context, state) {
+            final userId = state.pathParameters['userId']!;
+            return FollowingPage(userId: userId);
+          },
         ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {

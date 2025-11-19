@@ -22,9 +22,9 @@ class TrackCard extends ConsumerWidget {
     final isCurrentTrack = audioState.currentTrack?.id == track.id;
     final isPlaying = isCurrentTrack && audioState.isPlaying;
     final isLoading = isCurrentTrack && audioState.isLoading;
+    final theme = Theme.of(context);
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -42,21 +42,39 @@ class TrackCard extends ConsumerWidget {
                     width: double.infinity,
                     height: double.infinity,
                     placeholder: (context, url) => Container(
-                      color: Colors.grey[800],
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            theme.colorScheme.surfaceContainerHighest,
+                            theme.colorScheme.surfaceContainerLow,
+                          ],
+                        ),
+                      ),
                       child: const Center(
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
                     errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[800],
-                      child: const Icon(
-                        Icons.music_note,
-                        size: 64,
-                        color: Colors.grey,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            theme.colorScheme.surfaceContainerHighest,
+                            theme.colorScheme.surfaceContainerLow,
+                          ],
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.music_note_rounded,
+                        size: 72,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
                       ),
                     ),
                   ),
-                  // Playing indicator overlay
+                  // Playing indicator overlay with blur effect
                   if (isPlaying)
                     Positioned.fill(
                       child: Container(
@@ -66,29 +84,89 @@ class TrackCard extends ConsumerWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black.withValues(alpha: 0.3),
+                              Colors.black.withValues(alpha: 0.4),
                             ],
                           ),
                         ),
                         child: Align(
                           alignment: Alignment.bottomRight,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Icon(
-                              Icons.equalizer,
-                              color: Theme.of(context).colorScheme.primary,
-                              size: 24,
+                          child: Container(
+                            margin: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                                  blurRadius: 8,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.equalizer_rounded,
+                              color: Colors.white,
+                              size: 20,
                             ),
                           ),
                         ),
                       ),
                     ),
+                  // Story badge
+                  if (track.hasStory)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.tertiary,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.menu_book_rounded,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Story',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   // Loading indicator
                   if (isLoading)
-                    const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 3,
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 3,
+                        ),
                       ),
                     ),
                 ],
@@ -97,62 +175,81 @@ class TrackCard extends ConsumerWidget {
 
             // Track Info
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Title
                   Text(
                     track.title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
                         ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
 
                   // Artist Name
                   Text(
                     track.artistName,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w500,
                         ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
                   // Stats Row
                   Row(
                     children: [
-                      // Like count
-                      _StatChip(
-                        icon: Icons.favorite,
-                        count: track.likeCount,
-                        color: track.isLiked ? Colors.red : Colors.grey[600],
+                      Expanded(
+                        child: Wrap(
+                          spacing: 10,
+                          runSpacing: 8,
+                          children: [
+                            _StatChip(
+                              icon: Icons.favorite_rounded,
+                              count: track.likeCount,
+                              isHighlighted: track.isLiked,
+                              theme: theme,
+                            ),
+                            _StatChip(
+                              icon: Icons.chat_bubble_rounded,
+                              count: track.trackCommentCount,
+                              theme: theme,
+                            ),
+                            _StatChip(
+                              icon: Icons.play_arrow_rounded,
+                              count: track.viewCount,
+                              theme: theme,
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(width: 8),
-
-                      // View count
-                      _StatChip(
-                        icon: Icons.play_arrow,
-                        count: track.viewCount,
-                        color: Colors.grey[600],
-                      ),
-
-                      const Spacer(),
-
-                      // Like Button
-                      IconButton(
-                        icon: Icon(
-                          track.isLiked ? Icons.favorite : Icons.favorite_border,
+                      Container(
+                        decoration: BoxDecoration(
+                          color: track.isLiked
+                              ? Colors.red.withValues(alpha: 0.15)
+                              : theme.colorScheme.surfaceContainerHighest,
+                          shape: BoxShape.circle,
                         ),
-                        onPressed: onLike,
-                        color: track.isLiked
-                            ? Colors.red
-                            : Colors.grey[600],
-                        iconSize: 22,
+                        child: IconButton(
+                          icon: Icon(
+                            track.isLiked
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                          ),
+                          onPressed: onLike,
+                          color: track.isLiked
+                              ? Colors.red
+                              : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          iconSize: 24,
+                        ),
                       ),
                     ],
                   ),
@@ -170,37 +267,53 @@ class TrackCard extends ConsumerWidget {
 class _StatChip extends StatelessWidget {
   final IconData icon;
   final int count;
-  final Color? color;
+  final bool isHighlighted;
+  final ThemeData theme;
 
   const _StatChip({
     required this.icon,
     required this.count,
-    this.color,
+    required this.theme,
+    this.isHighlighted = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final chipColor = isHighlighted
+        ? theme.colorScheme.primary.withValues(alpha: 0.15)
+        : theme.colorScheme.surface;
+    final iconColor = isHighlighted
+        ? theme.colorScheme.primary
+        : theme.colorScheme.onSurface.withValues(alpha: 0.5);
+    final textColor = isHighlighted
+        ? theme.colorScheme.primary
+        : theme.colorScheme.onSurface.withValues(alpha: 0.7);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
+        color: chipColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon,
-            size: 14,
-            color: color ?? Colors.grey[600],
+            size: 15,
+            color: iconColor,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 5),
           Text(
             _formatCount(count),
-            style: TextStyle(
-              fontSize: 12,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: color ?? Colors.grey[700],
+              color: textColor,
             ),
           ),
         ],

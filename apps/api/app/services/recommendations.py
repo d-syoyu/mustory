@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Sequence
 from uuid import UUID
 
@@ -246,8 +246,8 @@ class RecommendationService:
     ) -> float:
         """Compute the final score for a track."""
         stats = stats or TrackEngagementStats()
-        now = datetime.utcnow()
-        created_at = track.created_at or now
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        created_at = track.created_at.replace(tzinfo=None) if track.created_at else now
         age_hours = max((now - created_at).total_seconds() / 3600, 0.0)
         recency_component = 1 / (1 + age_hours / 72)
         fresh_boost = 0.35 if age_hours < 6 else 0.0

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from .api.routes import auth, comments, stories, tracks
+from .api.routes import auth, comments, feed, profiles, stories, tracks
 from .core.config import get_settings
 
 
@@ -21,6 +21,8 @@ app.include_router(auth.router)
 app.include_router(tracks.router)
 app.include_router(stories.router)
 app.include_router(comments.router)
+app.include_router(profiles.router)
+app.include_router(feed.router)
 
 
 @app.get("/health", tags=["health"])

@@ -1,8 +1,12 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../features/tracks/domain/track.dart';
+import '../../features/tracks/data/tracks_repository.dart';
+import '../../features/tracks/application/tracks_controller.dart';
+import 'audio_handler.dart';
 
 part 'audio_player_controller.freezed.dart';
 
@@ -18,17 +22,29 @@ class AudioPlayerState with _$AudioPlayerState {
 }
 
 class AudioPlayerController extends StateNotifier<AudioPlayerState> {
-  AudioPlayerController() : super(const AudioPlayerState()) {
+  AudioPlayerController(this._tracksRepository) : super(const AudioPlayerState()) {
     _init();
   }
 
-  final AudioPlayer _player = AudioPlayer();
+  final TracksRepository _tracksRepository;
+  MustoryAudioHandler? _audioHandler;
 
-  void _init() {
-    _configureSession();
+  Future<void> _init() async {
+    await _configureSession();
 
-    // Listen to player state
-    _player.playerStateStream.listen((playerState) {
+    // Initialize audio handler for background playback
+    _audioHandler = await AudioService.init(
+      builder: () => MustoryAudioHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.mustory.app.audio',
+        androidNotificationChannelName: 'Mustory Audio',
+        androidNotificationOngoing: true,
+        androidStopForegroundOnPause: true,
+      ),
+    );
+
+    // Listen to player state from audio handler
+    _audioHandler!.player.playerStateStream.listen((playerState) {
       state = state.copyWith(
         isPlaying: playerState.playing,
         isLoading: playerState.processingState == ProcessingState.loading ||
@@ -37,12 +53,12 @@ class AudioPlayerController extends StateNotifier<AudioPlayerState> {
     });
 
     // Listen to position
-    _player.positionStream.listen((position) {
+    _audioHandler!.player.positionStream.listen((position) {
       state = state.copyWith(position: position);
     });
 
     // Listen to duration
-    _player.durationStream.listen((duration) {
+    _audioHandler!.player.durationStream.listen((duration) {
       if (duration != null) {
         state = state.copyWith(duration: duration);
       }
@@ -55,19 +71,33 @@ class AudioPlayerController extends StateNotifier<AudioPlayerState> {
   }
 
   Future<void> playTrack(Track track) async {
+    if (_audioHandler == null) {
+      throw Exception('Audio handler not initialized');
+    }
+
     try {
       state = state.copyWith(isLoading: true);
 
       // If the same track is already loaded, just play it
-      if (state.currentTrack?.id == track.id && _player.audioSource != null) {
-        await _player.play();
+      if (state.currentTrack?.id == track.id &&
+          _audioHandler!.player.audioSource != null) {
+        await _audioHandler!.play();
         return;
       }
 
-      // Load and play new track
+      // Load and play new track with metadata for notification
       state = state.copyWith(currentTrack: track);
-      await _player.setUrl(track.hlsUrl);
-      await _player.play();
+      await _audioHandler!.playFromUrl(
+        track.hlsUrl,
+        id: track.id,
+        title: track.title,
+        artist: track.artistName,
+        artworkUrl: track.artworkUrl,
+      );
+
+      // Increment view count when track starts playing
+      // Fire and forget - don't wait for completion
+      _tracksRepository.incrementViewCount(track.id);
     } catch (e) {
       state = state.copyWith(isLoading: false);
       rethrow;
@@ -75,23 +105,29 @@ class AudioPlayerController extends StateNotifier<AudioPlayerState> {
   }
 
   Future<void> togglePlayPause() async {
+    if (_audioHandler == null) return;
+
     if (state.isPlaying) {
-      await _player.pause();
+      await _audioHandler!.pause();
     } else {
-      await _player.play();
+      await _audioHandler!.play();
     }
   }
 
   Future<void> pause() async {
-    await _player.pause();
+    if (_audioHandler == null) return;
+    await _audioHandler!.pause();
   }
 
   Future<void> seek(Duration position) async {
-    await _player.seek(position);
+    if (_audioHandler == null) return;
+    await _audioHandler!.seek(position);
   }
 
   Future<void> stop() async {
-    await _player.stop();
+    if (_audioHandler == null) return;
+
+    await _audioHandler!.stop();
     state = state.copyWith(
       currentTrack: null,
       isPlaying: false,
@@ -102,15 +138,17 @@ class AudioPlayerController extends StateNotifier<AudioPlayerState> {
 
   @override
   void dispose() {
-    _player.dispose();
+    _audioHandler?.dispose();
     super.dispose();
   }
 
-  AudioPlayer get player => _player;
+  AudioPlayer? get player => _audioHandler?.player;
 }
 
 // Provider
 final audioPlayerControllerProvider =
     StateNotifierProvider<AudioPlayerController, AudioPlayerState>((ref) {
-  return AudioPlayerController();
+  // Import the tracksRepositoryProvider from tracks_controller
+  final tracksRepository = ref.watch(tracksRepositoryProvider);
+  return AudioPlayerController(tracksRepository);
 });

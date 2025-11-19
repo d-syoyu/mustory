@@ -8,6 +8,7 @@ import '../../../features/tracks/application/tracks_controller.dart';
 import '../../../features/tracks/presentation/widgets/track_card.dart';
 import '../../../features/tracks/presentation/widgets/horizontal_track_card.dart';
 import '../../../features/tracks/presentation/widgets/mini_player.dart';
+import '../../../features/profile/application/profile_controller.dart';
 
 class HomePage extends HookConsumerWidget {
   const HomePage({super.key});
@@ -16,10 +17,19 @@ class HomePage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tracksState = ref.watch(tracksControllerProvider);
     final recommendedTracks = ref.watch(recommendedTracksProvider);
+    final followingFeedState = ref.watch(followingFeedControllerProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mustory'),
+        title: Text(
+          'Mustory',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            fontSize: 26,
+          ),
+        ),
+        elevation: 0,
       ),
       body: Column(
         children: [
@@ -29,6 +39,7 @@ class HomePage extends HookConsumerWidget {
                 await Future.wait([
                   ref.read(tracksControllerProvider.notifier).refresh(),
                   ref.refresh(recommendedTracksProvider.future),
+                  ref.read(followingFeedControllerProvider.notifier).loadFeed(refresh: true),
                 ]);
               },
               child: CustomScrollView(
@@ -39,29 +50,34 @@ class HomePage extends HookConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
                           child: Row(
                             children: [
-                              Icon(
-                                Icons.auto_awesome,
-                                size: 20,
-                                color: Theme.of(context).colorScheme.primary,
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  Icons.auto_awesome_rounded,
+                                  size: 22,
+                                  color: theme.colorScheme.primary,
+                                ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 12),
                               Text(
                                 'あなたへのおすすめ',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 20,
                                     ),
                               ),
                             ],
                           ),
                         ),
                         SizedBox(
-                          height: 240,
+                          height: 260,
                           child: recommendedTracks.when(
                             data: (tracks) {
                               if (tracks.isEmpty) {
@@ -96,14 +112,8 @@ class HomePage extends HookConsumerWidget {
                                   final track = displayTracks[index];
                                   return HorizontalTrackCard(
                                     track: track,
-                                    onTap: () async {
-                                      final audioController = ref.read(
-                                        audioPlayerControllerProvider.notifier,
-                                      );
-                                      await audioController.playTrack(track);
-                                      if (context.mounted) {
-                                        context.go('/tracks/${track.id}');
-                                      }
+                                    onTap: () {
+                                      context.go('/tracks/${track.id}');
                                     },
                                   );
                                 },
@@ -160,25 +170,127 @@ class HomePage extends HookConsumerWidget {
                     ),
                   ),
 
+                  // フォロー中の新着セクション
+                  if (followingFeedState.items.isNotEmpty)
+                    SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 32, 20, 16),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.secondary.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    Icons.people_rounded,
+                                    size: 22,
+                                    color: theme.colorScheme.secondary,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'フォロー中の新着',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 20,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 260,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              itemCount: followingFeedState.items.take(10).length,
+                              itemBuilder: (context, index) {
+                                final item = followingFeedState.items[index];
+                                if (item.type == 'track' && item.track != null) {
+                                  return HorizontalTrackCard(
+                                    track: item.track!,
+                                    onTap: () {
+                                      context.go('/tracks/${item.track!.id}');
+                                    },
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // フォロー中が空の場合の案内
+                  if (followingFeedState.items.isEmpty && !followingFeedState.isLoading)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.people_outline,
+                                  size: 48,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'まだフォローしていません',
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '気になるユーザーのプロフィールからフォローしてみましょう',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
                   // 今日の注目 Section Header
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+                      padding: const EdgeInsets.fromLTRB(20, 32, 20, 16),
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.local_fire_department,
-                            size: 20,
-                            color: Colors.orange[700],
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.orange.shade600,
+                                  Colors.red.shade600,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.local_fire_department_rounded,
+                              size: 22,
+                              color: Colors.white,
+                            ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 12),
                           Text(
                             '今日の注目',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 20,
                                 ),
                           ),
                         ],
@@ -259,15 +371,8 @@ class HomePage extends HookConsumerWidget {
                             final track = tracksState.tracks[index];
                             return TrackCard(
                               track: track,
-                              onTap: () async {
-                                // Play track and navigate to detail
-                                final audioController = ref.read(
-                                  audioPlayerControllerProvider.notifier,
-                                );
-                                await audioController.playTrack(track);
-                                if (context.mounted) {
-                                  context.go('/tracks/${track.id}');
-                                }
+                              onTap: () {
+                                context.go('/tracks/${track.id}');
                               },
                               onLike: () {
                                 final notifier =

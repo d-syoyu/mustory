@@ -70,9 +70,6 @@ class UploadController extends StateNotifier<UploadState> {
         message: 'Uploading audio file...',
       );
 
-      print('=== Starting S3 upload ===');
-      print('Presigned URL: ${initResponse.audioUploadUrl}');
-
       await _repository.uploadFileToS3(
         presignedUrl: initResponse.audioUploadUrl,
         file: audioFile,
@@ -85,8 +82,6 @@ class UploadController extends StateNotifier<UploadState> {
           );
         },
       );
-
-      print('=== S3 upload completed ===');
 
       // Step 4: Upload artwork if provided
       if (artworkFile != null && initResponse.artworkUploadUrl != null) {
@@ -124,10 +119,7 @@ class UploadController extends StateNotifier<UploadState> {
       );
 
       _pollProcessingStatus(initResponse.trackId);
-    } catch (e, stackTrace) {
-      print('=== Upload Error ===');
-      print('Error: $e');
-      print('Stack trace: $stackTrace');
+    } catch (e) {
       state = UploadState.error(message: e.toString());
     }
   }

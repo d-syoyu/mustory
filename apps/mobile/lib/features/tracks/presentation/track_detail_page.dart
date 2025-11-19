@@ -4,9 +4,12 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import '../application/track_detail_controller.dart';
+import '../domain/track.dart';
 import '../../../core/audio/audio_player_controller.dart';
+import '../../../core/auth/auth_controller.dart';
 import 'story_detail_sheet.dart';
 import 'comments_detail_sheet.dart';
+import 'widgets/track_edit_dialog.dart';
 
 class TrackDetailPage extends HookConsumerWidget {
   const TrackDetailPage({super.key, required this.trackId});
@@ -18,6 +21,12 @@ class TrackDetailPage extends HookConsumerWidget {
     final state = ref.watch(trackDetailControllerProvider(trackId));
     final audioState = ref.watch(audioPlayerControllerProvider);
     final selectedTab = useState(0); // 0: 曲, 1: ストーリー
+    final authState = ref.watch(authControllerProvider);
+    final currentUserId = authState.maybeWhen(
+      authenticated: (userId, _, __, ___) => userId,
+      orElse: () => null,
+    );
+    final isAuthenticated = currentUserId != null;
 
     if (state.isLoading && state.trackDetail == null) {
       return Scaffold(
@@ -39,7 +48,9 @@ class TrackDetailPage extends HookConsumerWidget {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  ref.read(trackDetailControllerProvider(trackId).notifier).refresh();
+                  ref
+                      .read(trackDetailControllerProvider(trackId).notifier)
+                      .refresh();
                 },
                 child: const Text('再試行'),
               ),
@@ -51,9 +62,11 @@ class TrackDetailPage extends HookConsumerWidget {
 
     final detail = state.trackDetail!;
     final track = detail.track;
-    final isPlaying = audioState.currentTrack?.id == track.id && audioState.isPlaying;
+    final isPlaying =
+        audioState.currentTrack?.id == track.id && audioState.isPlaying;
     final isCurrentTrack = audioState.currentTrack?.id == track.id;
     final hasStory = track.story != null;
+    final isOwner = isAuthenticated && currentUserId == track.userId;
 
     return PopScope(
       canPop: false,
@@ -111,8 +124,24 @@ class TrackDetailPage extends HookConsumerWidget {
             Expanded(
               child: SingleChildScrollView(
                 child: selectedTab.value == 0
-                    ? _buildSongTab(context, ref, track, detail, audioState, isPlaying, isCurrentTrack)
-                    : _buildStoryTab(context, track, detail),
+                    ? _buildSongTab(
+                        context,
+                        ref,
+                        track,
+                        detail,
+                        audioState,
+                        isPlaying,
+                        isCurrentTrack,
+                        isAuthenticated,
+                      )
+                    : _buildStoryTab(
+                        context,
+                        ref,
+                        track,
+                        detail,
+                        isOwner: isOwner,
+                        isAuthenticated: isAuthenticated,
+                      ),
               ),
             ),
           ],
@@ -167,6 +196,7 @@ class TrackDetailPage extends HookConsumerWidget {
     dynamic audioState,
     bool isPlaying,
     bool isCurrentTrack,
+    bool isAuthenticated,
   ) {
     return Column(
       children: [
@@ -241,11 +271,11 @@ class TrackDetailPage extends HookConsumerWidget {
                   ),
                   child: Slider(
                     value: audioState.position.inSeconds.toDouble().clamp(
-                      0.0,
-                      audioState.duration.inSeconds.toDouble() > 0
-                          ? audioState.duration.inSeconds.toDouble()
-                          : 1.0,
-                    ),
+                          0.0,
+                          audioState.duration.inSeconds.toDouble() > 0
+                              ? audioState.duration.inSeconds.toDouble()
+                              : 1.0,
+                        ),
                     max: audioState.duration.inSeconds.toDouble() > 0
                         ? audioState.duration.inSeconds.toDouble()
                         : 1.0,
@@ -367,7 +397,8 @@ class TrackDetailPage extends HookConsumerWidget {
                         color: Colors.white,
                       ),
                       onPressed: () async {
-                        final controller = ref.read(audioPlayerControllerProvider.notifier);
+                        final controller =
+                            ref.read(audioPlayerControllerProvider.notifier);
                         if (isCurrentTrack) {
                           await controller.togglePlayPause();
                         } else {
@@ -401,7 +432,12 @@ class TrackDetailPage extends HookConsumerWidget {
                 color: track.isLiked ? Colors.red : null,
               ),
               onPressed: () {
-                final controller = ref.read(trackDetailControllerProvider(trackId).notifier);
+                if (!isAuthenticated) {
+                  _promptLogin(context);
+                  return;
+                }
+                final controller =
+                    ref.read(trackDetailControllerProvider(trackId).notifier);
                 if (track.isLiked) {
                   controller.unlikeTrack();
                 } else {
@@ -420,6 +456,10 @@ class TrackDetailPage extends HookConsumerWidget {
               iconSize: 28,
               icon: const Icon(Icons.comment_outlined),
               onPressed: () {
+                if (!isAuthenticated) {
+                  _promptLogin(context);
+                  return;
+                }
                 showModalBottomSheet<void>(
                   context: context,
                   isScrollControlled: true,
@@ -448,12 +488,38 @@ class TrackDetailPage extends HookConsumerWidget {
           ],
         ),
 
+        if (!isAuthenticated) ...[
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('ログインしてコメントやいいねに参加しましょう'),
+                  const SizedBox(height: 8),
+                  FilledButton(
+                    onPressed: () => _promptLogin(context),
+                    child: const Text('ログインする'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 32),
       ],
     );
   }
 
-  Widget _buildStoryTab(BuildContext context, dynamic track, dynamic detail) {
+  Widget _buildStoryTab(
+    BuildContext context,
+    WidgetRef ref,
+    Track track,
+    dynamic detail, {
+    required bool isOwner,
+    required bool isAuthenticated,
+  }) {
     if (track.story == null) {
       return Center(
         child: Padding(
@@ -472,6 +538,14 @@ class TrackDetailPage extends HookConsumerWidget {
                 style: TextStyle(color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),
+              if (isOwner) ...[
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () => _openStoryEditor(context, ref, track),
+                  icon: const Icon(Icons.menu_book),
+                  label: const Text('物語を作成する'),
+                ),
+              ],
             ],
           ),
         ),
@@ -501,7 +575,7 @@ class TrackDetailPage extends HookConsumerWidget {
           ),
           const SizedBox(height: 24),
 
-          // ストーリーメタデータとコメントボタン
+          // メタ情報とコメントボタン
           Row(
             children: [
               Icon(Icons.favorite, size: 16, color: Colors.grey[600]),
@@ -520,6 +594,10 @@ class TrackDetailPage extends HookConsumerWidget {
               const Spacer(),
               TextButton.icon(
                 onPressed: () {
+                  if (!isAuthenticated) {
+                    _promptLogin(context);
+                    return;
+                  }
                   showModalBottomSheet<void>(
                     context: context,
                     isScrollControlled: true,
@@ -537,6 +615,34 @@ class TrackDetailPage extends HookConsumerWidget {
             ],
           ),
 
+          if (isOwner) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => _openStoryEditor(context, ref, track),
+              icon: const Icon(Icons.edit),
+              label: const Text('物語を編集する'),
+            ),
+          ],
+
+          if (!isAuthenticated) ...[
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('ログインして物語へのコメントに参加しましょう'),
+                    const SizedBox(height: 8),
+                    FilledButton(
+                      onPressed: () => _promptLogin(context),
+                      child: const Text('ログインする'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
         ],
       ),
@@ -547,5 +653,52 @@ class TrackDetailPage extends HookConsumerWidget {
     final minutes = duration.inMinutes;
     final seconds = duration.inSeconds.remainder(60);
     return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _openStoryEditor(
+    BuildContext context,
+    WidgetRef ref,
+    Track track,
+  ) async {
+    final controller =
+        ref.read(trackDetailControllerProvider(trackId).notifier);
+
+    await showDialog<bool>(
+      context: context,
+      builder: (context) => TrackEditDialog(
+        track: track,
+        onSave: (title, artistName, storyLead, storyBody) async {
+          await controller.updateTrack(
+            title: title,
+            artistName: artistName,
+            storyLead: storyLead,
+            storyBody: storyBody,
+          );
+        },
+      ),
+    );
+  }
+
+  void _promptLogin(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('ログインが必要です'),
+        content: const Text('コミュニティの参加にはログインしてください。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('閉じる'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.go('/login');
+            },
+            child: const Text('ログインする'),
+          ),
+        ],
+      ),
+    );
   }
 }
