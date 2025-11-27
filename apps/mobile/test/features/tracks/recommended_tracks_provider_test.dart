@@ -65,7 +65,7 @@ class _FakeTracksRepository extends TracksRepository {
   int requestedLimit = 0;
 
   @override
-  Future<List<Track>> getRecommendedTracks({int limit = 20}) async {
+  Future<List<Track>> getRecommendedTracks({int limit = 20, bool forceRefresh = false}) async {
     requestedLimit = limit;
     return _tracks;
   }
@@ -75,7 +75,7 @@ class _FailingTracksRepository extends TracksRepository {
   _FailingTracksRepository() : super(Dio());
 
   @override
-  Future<List<Track>> getRecommendedTracks({int limit = 20}) {
+  Future<List<Track>> getRecommendedTracks({int limit = 20, bool forceRefresh = false}) {
     throw Exception('network error');
   }
 }

@@ -3,16 +3,27 @@ import 'package:mustory_mobile/features/tracks/domain/track.dart';
 import 'package:mustory_mobile/features/tracks/domain/track_detail.dart';
 import 'package:mustory_mobile/features/tracks/domain/comment.dart';
 import 'package:mustory_mobile/features/story/domain/story.dart';
+import 'package:mustory_mobile/core/network/api_cache.dart';
 
 class TracksRepository {
   final Dio _dio;
+  final ApiCache _cache = ApiCache();
 
   TracksRepository(this._dio);
 
   Future<List<Track>> getTracks({
     int limit = 20,
     int offset = 0,
+    bool forceRefresh = false,
   }) async {
+    final cacheKey = 'tracks_${limit}_$offset';
+
+    // Return cached data if available and not forcing refresh
+    if (!forceRefresh) {
+      final cached = _cache.get<List<Track>>(cacheKey);
+      if (cached != null) return cached;
+    }
+
     try {
       final response = await _dio.get<List<dynamic>>(
         '/tracks/',
@@ -23,9 +34,13 @@ class TracksRepository {
       );
 
       if (response.data is List) {
-        return (response.data as List)
+        final tracks = (response.data as List)
             .map((json) => Track.fromJson(json as Map<String, dynamic>))
             .toList();
+
+        // Cache for 30 seconds (short duration for feed data)
+        _cache.set(cacheKey, tracks, duration: ApiCache.shortDuration);
+        return tracks;
       }
 
       return [];
@@ -36,7 +51,16 @@ class TracksRepository {
 
   Future<List<Track>> getRecommendedTracks({
     int limit = 20,
+    bool forceRefresh = false,
   }) async {
+    final cacheKey = 'recommended_tracks_$limit';
+
+    // Return cached data if available
+    if (!forceRefresh) {
+      final cached = _cache.get<List<Track>>(cacheKey);
+      if (cached != null) return cached;
+    }
+
     try {
       final response = await _dio.get<List<dynamic>>(
         '/tracks/recommendations',
@@ -46,9 +70,13 @@ class TracksRepository {
       );
 
       if (response.data is List) {
-        return (response.data as List)
+        final tracks = (response.data as List)
             .map((json) => Track.fromJson(json as Map<String, dynamic>))
             .toList();
+
+        // Cache recommendations for 5 minutes (they don't change often)
+        _cache.set(cacheKey, tracks);
+        return tracks;
       }
 
       return [];
@@ -57,13 +85,30 @@ class TracksRepository {
     }
   }
 
-  Future<TrackDetail> getTrackDetail(String id) async {
+  Future<TrackDetail> getTrackDetail(String id, {bool forceRefresh = false}) async {
+    final cacheKey = 'track_detail_$id';
+
+    // Return cached data if available
+    if (!forceRefresh) {
+      final cached = _cache.get<TrackDetail>(cacheKey);
+      if (cached != null) return cached;
+    }
+
     try {
       final response = await _dio.get<Map<String, dynamic>>('/tracks/$id');
-      return TrackDetail.fromJson(response.data as Map<String, dynamic>);
+      final detail = TrackDetail.fromJson(response.data as Map<String, dynamic>);
+
+      // Cache track detail for 1 minute
+      _cache.set(cacheKey, detail, duration: const Duration(minutes: 1));
+      return detail;
     } on DioException catch (e) {
       throw Exception('Failed to load track detail: ${e.message}');
     }
+  }
+
+  /// Invalidate track detail cache when data changes
+  void invalidateTrackCache(String trackId) {
+    _cache.invalidate('track_detail_$trackId');
   }
 
   Future<List<Comment>> getTrackComments(String trackId) async {
@@ -259,7 +304,15 @@ class TracksRepository {
   Future<List<Track>> searchTracks({
     required String query,
     int limit = 20,
+    bool forceRefresh = false,
   }) async {
+    final cacheKey = 'search_tracks_${query}_$limit';
+
+    if (!forceRefresh) {
+      final cached = _cache.get<List<Track>>(cacheKey);
+      if (cached != null) return cached;
+    }
+
     try {
       final response = await _dio.get<List<dynamic>>(
         '/tracks/search',
@@ -270,15 +323,27 @@ class TracksRepository {
       );
 
       if (response.data is List) {
-        return (response.data as List)
+        final tracks = (response.data as List)
             .map((json) => Track.fromJson(json as Map<String, dynamic>))
             .toList();
+
+        // Cache search results for 2 minutes
+        _cache.set(cacheKey, tracks, duration: const Duration(minutes: 2));
+        return tracks;
       }
 
       return [];
     } on DioException catch (e) {
       throw Exception('Failed to search tracks: ${e.message}');
     }
+  }
+
+  /// Clear all track-related caches
+  void clearAllCaches() {
+    _cache.invalidatePattern('tracks_');
+    _cache.invalidatePattern('recommended_');
+    _cache.invalidatePattern('track_detail_');
+    _cache.invalidatePattern('search_tracks_');
   }
 
   Future<List<Story>> getLikedStories({

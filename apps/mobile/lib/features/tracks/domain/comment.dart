@@ -20,13 +20,15 @@ class Comment with _$Comment {
   }) = _Comment;
 
   factory Comment.fromJson(Map<String, dynamic> json) => Comment(
-        id: json['id'] as String,
-        authorUserId: json['author_user_id'] as String,
-        authorDisplayName: json['author_display_name'] as String,
-        body: json['body'] as String,
-        createdAt: DateTime.parse(json['created_at'] as String),
-        targetType: json['target_type'] as String,
-        targetId: json['target_id'] as String,
+        id: json['id'] as String? ?? '',
+        authorUserId: json['author_user_id'] as String? ?? '',
+        authorDisplayName: json['author_display_name'] as String? ?? '',
+        body: json['body'] as String? ?? '',
+        createdAt: json['created_at'] != null
+            ? DateTime.parse(json['created_at'] as String)
+            : DateTime.now(),
+        targetType: json['target_type'] as String? ?? '',
+        targetId: json['target_id'] as String? ?? '',
         parentCommentId: json['parent_comment_id'] as String?,
         likeCount: (json['like_count'] as num?)?.toInt() ?? 0,
         replyCount: (json['reply_count'] as num?)?.toInt() ?? 0,

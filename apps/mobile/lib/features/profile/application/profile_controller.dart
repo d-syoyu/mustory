@@ -3,6 +3,8 @@ import 'package:mustory_mobile/core/network/api_client.dart';
 import 'package:mustory_mobile/features/profile/data/profile_repository.dart';
 import 'package:mustory_mobile/features/profile/domain/feed_item.dart';
 import 'package:mustory_mobile/features/profile/domain/user_profile.dart';
+import 'package:mustory_mobile/features/tracks/domain/track.dart';
+import 'package:mustory_mobile/features/story/domain/story.dart';
 
 // Repository Provider
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
@@ -367,5 +369,179 @@ final followingFeedControllerProvider =
   (ref) {
     final repository = ref.watch(profileRepositoryProvider);
     return FollowingFeedController(repository);
+  },
+);
+
+// User Tracks State
+class UserTracksState {
+  final List<Track> tracks;
+  final bool isLoading;
+  final String? error;
+
+  UserTracksState({
+    this.tracks = const [],
+    this.isLoading = false,
+    this.error,
+  });
+
+  UserTracksState copyWith({
+    List<Track>? tracks,
+    bool? isLoading,
+    String? error,
+  }) {
+    return UserTracksState(
+      tracks: tracks ?? this.tracks,
+      isLoading: isLoading ?? this.isLoading,
+      error: error ?? this.error,
+    );
+  }
+}
+
+// User Tracks Controller
+class UserTracksController extends StateNotifier<UserTracksState> {
+  final ProfileRepository _repository;
+  final String userId;
+
+  UserTracksController(this._repository, this.userId) : super(UserTracksState()) {
+    loadTracks();
+  }
+
+  Future<void> loadTracks() async {
+    if (state.isLoading) return;
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final tracks = await _repository.getUserTracks(userId);
+      state = UserTracksState(tracks: tracks);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'トラックの取得に失敗しました: $e',
+      );
+    }
+  }
+}
+
+final userTracksControllerProvider =
+    StateNotifierProvider.family<UserTracksController, UserTracksState, String>(
+  (ref, userId) {
+    final repository = ref.watch(profileRepositoryProvider);
+    return UserTracksController(repository, userId);
+  },
+);
+
+// User Stories State
+class UserStoriesState {
+  final List<Story> stories;
+  final bool isLoading;
+  final String? error;
+
+  UserStoriesState({
+    this.stories = const [],
+    this.isLoading = false,
+    this.error,
+  });
+
+  UserStoriesState copyWith({
+    List<Story>? stories,
+    bool? isLoading,
+    String? error,
+  }) {
+    return UserStoriesState(
+      stories: stories ?? this.stories,
+      isLoading: isLoading ?? this.isLoading,
+      error: error ?? this.error,
+    );
+  }
+}
+
+// User Stories Controller
+class UserStoriesController extends StateNotifier<UserStoriesState> {
+  final ProfileRepository _repository;
+  final String userId;
+
+  UserStoriesController(this._repository, this.userId) : super(UserStoriesState()) {
+    loadStories();
+  }
+
+  Future<void> loadStories() async {
+    if (state.isLoading) return;
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final stories = await _repository.getUserStories(userId);
+      state = UserStoriesState(stories: stories);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '物語の取得に失敗しました: $e',
+      );
+    }
+  }
+}
+
+final userStoriesControllerProvider =
+    StateNotifierProvider.family<UserStoriesController, UserStoriesState, String>(
+  (ref, userId) {
+    final repository = ref.watch(profileRepositoryProvider);
+    return UserStoriesController(repository, userId);
+  },
+);
+
+// User Liked Tracks State
+class UserLikedTracksState {
+  final List<Track> tracks;
+  final bool isLoading;
+  final String? error;
+
+  UserLikedTracksState({
+    this.tracks = const [],
+    this.isLoading = false,
+    this.error,
+  });
+
+  UserLikedTracksState copyWith({
+    List<Track>? tracks,
+    bool? isLoading,
+    String? error,
+  }) {
+    return UserLikedTracksState(
+      tracks: tracks ?? this.tracks,
+      isLoading: isLoading ?? this.isLoading,
+      error: error ?? this.error,
+    );
+  }
+}
+
+// User Liked Tracks Controller
+class UserLikedTracksController extends StateNotifier<UserLikedTracksState> {
+  final ProfileRepository _repository;
+  final String userId;
+
+  UserLikedTracksController(this._repository, this.userId) : super(UserLikedTracksState()) {
+    loadLikedTracks();
+  }
+
+  Future<void> loadLikedTracks() async {
+    if (state.isLoading) return;
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final tracks = await _repository.getUserLikedTracks(userId);
+      state = UserLikedTracksState(tracks: tracks);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'いいねしたトラックの取得に失敗しました: $e',
+      );
+    }
+  }
+}
+
+final userLikedTracksControllerProvider =
+    StateNotifierProvider.family<UserLikedTracksController, UserLikedTracksState, String>(
+  (ref, userId) {
+    final repository = ref.watch(profileRepositoryProvider);
+    return UserLikedTracksController(repository, userId);
   },
 );

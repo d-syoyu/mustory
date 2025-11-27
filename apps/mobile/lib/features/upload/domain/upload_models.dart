@@ -13,6 +13,7 @@ class TrackUploadInitRequest with _$TrackUploadInitRequest {
     String? artworkExtension,
     String? storyLead,
     String? storyBody,
+    @Default(<String>[]) List<String> tags,
   }) = _TrackUploadInitRequest;
 
   factory TrackUploadInitRequest.fromJson(Map<String, dynamic> json) {
@@ -24,6 +25,7 @@ class TrackUploadInitRequest with _$TrackUploadInitRequest {
       artworkExtension: json['artwork_extension'] as String?,
       storyLead: json['story_lead'] as String?,
       storyBody: json['story_body'] as String?,
+      tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
     );
   }
 
@@ -37,6 +39,7 @@ class TrackUploadInitRequest with _$TrackUploadInitRequest {
         if (artworkExtension != null) 'artwork_extension': artworkExtension,
         if (storyLead != null) 'story_lead': storyLead,
         if (storyBody != null) 'story_body': storyBody,
+        if (tags.isNotEmpty) 'tags': tags,
       };
 }
 

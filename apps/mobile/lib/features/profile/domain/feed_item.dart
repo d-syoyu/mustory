@@ -11,8 +11,8 @@ part 'feed_item.g.dart';
 class FeedUser with _$FeedUser {
   const factory FeedUser({
     required String id,
-    required String username,
-    required String displayName,
+    @Default('') String username,
+    @Default('') String displayName,
     @JsonKey(name: 'avatar_url') String? avatarUrl,
   }) = _FeedUser;
 

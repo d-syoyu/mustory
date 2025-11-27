@@ -164,3 +164,39 @@ final audioPlayerControllerProvider =
   final analyticsService = ref.watch(analyticsServiceProvider);
   return AudioPlayerController(tracksRepository, analyticsService);
 });
+
+// Optimized providers - use these instead of watching full state
+// Only rebuilds when position changes (for progress bar)
+final audioPositionProvider = Provider<Duration>((ref) {
+  return ref.watch(
+    audioPlayerControllerProvider.select((state) => state.position),
+  );
+});
+
+// Only rebuilds when duration changes
+final audioDurationProvider = Provider<Duration>((ref) {
+  return ref.watch(
+    audioPlayerControllerProvider.select((state) => state.duration),
+  );
+});
+
+// Only rebuilds when playing state changes
+final audioIsPlayingProvider = Provider<bool>((ref) {
+  return ref.watch(
+    audioPlayerControllerProvider.select((state) => state.isPlaying),
+  );
+});
+
+// Only rebuilds when loading state changes
+final audioIsLoadingProvider = Provider<bool>((ref) {
+  return ref.watch(
+    audioPlayerControllerProvider.select((state) => state.isLoading),
+  );
+});
+
+// Only rebuilds when current track changes
+final audioCurrentTrackProvider = Provider<Track?>((ref) {
+  return ref.watch(
+    audioPlayerControllerProvider.select((state) => state.currentTrack),
+  );
+});

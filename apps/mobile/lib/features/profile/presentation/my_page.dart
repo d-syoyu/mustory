@@ -115,9 +115,13 @@ class MyPage extends HookConsumerWidget {
                               const Icon(Icons.location_on,
                                   size: 16, color: Colors.white70),
                               const SizedBox(width: 4),
-                              Text(
-                                profile.location!,
-                                style: const TextStyle(color: Colors.white70),
+                              Flexible(
+                                child: Text(
+                                  profile.location!,
+                                  style: const TextStyle(color: Colors.white70),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
                               ),
                             ],
                           ),
@@ -131,6 +135,8 @@ class MyPage extends HookConsumerWidget {
                               color: Colors.white70,
                               decoration: TextDecoration.underline,
                             ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         ],
                         const SizedBox(height: 12),

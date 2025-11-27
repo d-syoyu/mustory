@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/auth/auth_controller.dart';
+import '../../../core/audio/audio_player_controller.dart';
+import '../../../core/widgets/skeleton_loader.dart';
 import '../application/profile_controller.dart';
+import '../../tracks/domain/track.dart';
+import '../../story/domain/story.dart';
 
 class UserProfilePage extends HookConsumerWidget {
   final String userId;
@@ -26,7 +31,10 @@ class UserProfilePage extends HookConsumerWidget {
     final isSelf = profile != null && currentUserId == profile.id;
 
     if (profileState.isLoading && profile == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: AppBar(title: const Text('プロフィール')),
+        body: const ProfileSkeleton(),
+      );
     }
 
     if (profileState.error != null && profile == null) {
@@ -122,10 +130,52 @@ class UserProfilePage extends HookConsumerWidget {
                     ),
                     if (profile?.bio != null && profile!.bio!.isNotEmpty) ...[
                       const SizedBox(height: 12),
-                      Text(
-                        profile.bio!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          profile.bio!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                    if (profile?.location != null && profile!.location!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.location_on, size: 16, color: Colors.white70),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              profile.location!,
+                              style: const TextStyle(color: Colors.white70),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (profile?.linkUrl != null && profile!.linkUrl!.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.link, size: 16, color: Colors.white70),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              profile.linkUrl!,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                decoration: TextDecoration.underline,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                     if (!isSelf && profile != null) ...[
@@ -201,34 +251,13 @@ class UserProfilePage extends HookConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    if (profile?.linkUrl != null &&
-                        profile!.linkUrl!.isNotEmpty) ...[
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          if (profile.location != null &&
-                              profile.location!.isNotEmpty)
-                            Chip(
-                              avatar: const Icon(Icons.location_on, size: 16),
-                              label: Text(profile.location!),
-                            ),
-                          ActionChip(
-                            label: Text(profile.linkUrl!),
-                            onPressed:
-                                () {}, // No browser launch in CLI summary; kept as placeholder.
-                          ),
-                        ],
-                      ),
-                    ],
                   ],
                 ),
               ),
 
               const Divider(),
 
-              // Placeholder tabs
+              // Profile tabs with actual data
               DefaultTabController(
                 length: 3,
                 child: Column(
@@ -241,27 +270,12 @@ class UserProfilePage extends HookConsumerWidget {
                       ],
                     ),
                     SizedBox(
-                      height: 320,
+                      height: 400,
                       child: TabBarView(
                         children: [
-                          _buildPlaceholderTab(
-                            context,
-                            title: 'トラック一覧',
-                            description: 'このユーザーのトラックは後続の実装で表示します。',
-                            icon: Icons.library_music,
-                          ),
-                          _buildPlaceholderTab(
-                            context,
-                            title: '物語一覧',
-                            description: '物語フィードは今後追加予定です。',
-                            icon: Icons.menu_book_rounded,
-                          ),
-                          _buildPlaceholderTab(
-                            context,
-                            title: 'いいね一覧',
-                            description: 'いいねしたトラックは今後表示予定です。',
-                            icon: Icons.favorite,
-                          ),
+                          _UserTracksTab(userId: userId),
+                          _UserStoriesTab(userId: userId),
+                          _UserLikedTracksTab(userId: userId),
                         ],
                       ),
                     ),
@@ -274,42 +288,332 @@ class UserProfilePage extends HookConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildPlaceholderTab(
-    BuildContext context, {
-    required String title,
-    required String description,
-    required IconData icon,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+// User Tracks Tab
+class _UserTracksTab extends ConsumerWidget {
+  final String userId;
+
+  const _UserTracksTab({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(userTracksControllerProvider(userId));
+    final theme = Theme.of(context);
+
+    if (state.isLoading && state.tracks.isEmpty) {
+      return const ProfileTrackListSkeleton(itemCount: 5);
+    }
+
+    if (state.error != null && state.tracks.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+            const SizedBox(height: 8),
+            Text(state.error!, style: TextStyle(color: theme.colorScheme.error)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => ref.read(userTracksControllerProvider(userId).notifier).loadTracks(),
+              child: const Text('再読み込み'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state.tracks.isEmpty) {
+      return _buildEmptyState(
+        context,
+        icon: Icons.library_music,
+        message: 'まだトラックがありません',
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: state.tracks.length,
+      itemBuilder: (context, index) {
+        final track = state.tracks[index];
+        return _ProfileTrackTile(
+          track: track,
+          onTap: () => context.push('/tracks/${track.id}'),
+        );
+      },
+    );
+  }
+}
+
+// User Stories Tab
+class _UserStoriesTab extends ConsumerWidget {
+  final String userId;
+
+  const _UserStoriesTab({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(userStoriesControllerProvider(userId));
+    final theme = Theme.of(context);
+
+    if (state.isLoading && state.stories.isEmpty) {
+      return const ProfileTrackListSkeleton(itemCount: 5);
+    }
+
+    if (state.error != null && state.stories.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+            const SizedBox(height: 8),
+            Text(state.error!, style: TextStyle(color: theme.colorScheme.error)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => ref.read(userStoriesControllerProvider(userId).notifier).loadStories(),
+              child: const Text('再読み込み'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state.stories.isEmpty) {
+      return _buildEmptyState(
+        context,
+        icon: Icons.menu_book_rounded,
+        message: 'まだ物語がありません',
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: state.stories.length,
+      itemBuilder: (context, index) {
+        final story = state.stories[index];
+        return _ProfileStoryTile(
+          story: story,
+          onTap: () => context.push('/tracks/${story.trackId}'),
+        );
+      },
+    );
+  }
+}
+
+// User Liked Tracks Tab
+class _UserLikedTracksTab extends ConsumerWidget {
+  final String userId;
+
+  const _UserLikedTracksTab({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(userLikedTracksControllerProvider(userId));
+    final theme = Theme.of(context);
+
+    if (state.isLoading && state.tracks.isEmpty) {
+      return const ProfileTrackListSkeleton(itemCount: 5);
+    }
+
+    if (state.error != null && state.tracks.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+            const SizedBox(height: 8),
+            Text(state.error!, style: TextStyle(color: theme.colorScheme.error)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => ref.read(userLikedTracksControllerProvider(userId).notifier).loadLikedTracks(),
+              child: const Text('再読み込み'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state.tracks.isEmpty) {
+      return _buildEmptyState(
+        context,
+        icon: Icons.favorite,
+        message: 'まだいいねしたトラックがありません',
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: state.tracks.length,
+      itemBuilder: (context, index) {
+        final track = state.tracks[index];
+        return _ProfileTrackTile(
+          track: track,
+          onTap: () => context.push('/tracks/${track.id}'),
+        );
+      },
+    );
+  }
+}
+
+Widget _buildEmptyState(BuildContext context, {required IconData icon, required String message}) {
+  final theme = Theme.of(context);
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: 48, color: theme.colorScheme.outline),
+        const SizedBox(height: 12),
+        Text(
+          message,
+          style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.outline),
+        ),
+      ],
+    ),
+  );
+}
+
+// Track tile for profile tabs
+class _ProfileTrackTile extends ConsumerWidget {
+  final Track track;
+  final VoidCallback? onTap;
+
+  const _ProfileTrackTile({required this.track, this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final audioState = ref.watch(audioPlayerControllerProvider);
+    final isCurrentTrack = audioState.currentTrack?.id == track.id;
+    final isPlaying = isCurrentTrack && audioState.isPlaying;
+    final theme = Theme.of(context);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Stack(
             children: [
-              Icon(
-                icon,
-                size: 36,
-                color: Theme.of(context).colorScheme.primary,
+              CachedNetworkImage(
+                imageUrl: track.artworkUrl,
+                width: 56,
+                height: 56,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => Container(
+                  width: 56,
+                  height: 56,
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  child: const Icon(Icons.music_note),
+                ),
+                errorWidget: (_, __, ___) => Container(
+                  width: 56,
+                  height: 56,
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  child: const Icon(Icons.music_note),
+                ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
+              if (isPlaying)
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.equalizer, color: Colors.white),
+                ),
             ],
           ),
         ),
+        title: Text(
+          track.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontWeight: isCurrentTrack ? FontWeight.bold : FontWeight.normal,
+            color: isCurrentTrack ? theme.colorScheme.primary : null,
+          ),
+        ),
+        subtitle: Text(
+          track.artistName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (track.hasStory)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.menu_book, size: 12, color: theme.colorScheme.primary),
+                    const SizedBox(width: 2),
+                    Text(
+                      '物語',
+                      style: TextStyle(fontSize: 10, color: theme.colorScheme.primary),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(width: 8),
+            Icon(
+              track.isLiked ? Icons.favorite : Icons.favorite_border,
+              size: 20,
+              color: track.isLiked ? Colors.red : theme.colorScheme.outline,
+            ),
+          ],
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+// Story tile for profile tabs
+class _ProfileStoryTile extends StatelessWidget {
+  final Story story;
+  final VoidCallback? onTap;
+
+  const _ProfileStoryTile({required this.story, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        leading: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            Icons.menu_book_rounded,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        title: Text(
+          story.lead,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Row(
+          children: [
+            Icon(Icons.favorite, size: 14, color: theme.colorScheme.outline),
+            const SizedBox(width: 4),
+            Text('${story.likeCount}'),
+          ],
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
       ),
     );
   }
@@ -324,16 +628,32 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chip = Chip(
-      label: Text('$label: $value'),
+    final theme = Theme.of(context);
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$value',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.outline,
+          ),
+        ),
+      ],
     );
-    if (onTap == null) return chip;
+    if (onTap == null) return content;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: chip,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: content,
       ),
     );
   }

@@ -18,14 +18,16 @@ class Story with _$Story {
   const Story._();
 
   factory Story.fromJson(Map<String, dynamic> json) => Story(
-        id: json['id'] as String,
-        trackId: json['track_id'] as String,
-        authorUserId: json['author_user_id'] as String,
-        lead: json['lead'] as String,
-        body: json['body'] as String,
+        id: json['id'] as String? ?? '',
+        trackId: json['track_id'] as String? ?? '',
+        authorUserId: json['author_user_id'] as String? ?? '',
+        lead: json['lead'] as String? ?? '',
+        body: json['body'] as String? ?? '',
         likeCount: (json['like_count'] as num?)?.toInt() ?? 0,
         isLiked: json['is_liked'] as bool? ?? false,
-        createdAt: DateTime.parse(json['created_at'] as String),
+        createdAt: json['created_at'] != null
+            ? DateTime.parse(json['created_at'] as String)
+            : DateTime.now(),
       );
 
   Map<String, dynamic> toJson() => {

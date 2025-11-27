@@ -9,9 +9,9 @@ part 'user_profile.g.dart';
 class UserProfile with _$UserProfile {
   const factory UserProfile({
     required String id,
-    required String username,
-    required String displayName,
-    required String email,
+    @Default('') String username,
+    @Default('') String displayName,
+    @Default('') String email,
     @JsonKey(name: 'avatar_url') String? avatarUrl,
     String? bio,
     String? location,
@@ -31,8 +31,8 @@ class UserProfile with _$UserProfile {
 class UserSummary with _$UserSummary {
   const factory UserSummary({
     required String id,
-    required String username,
-    required String displayName,
+    @Default('') String username,
+    @Default('') String displayName,
     @JsonKey(name: 'avatar_url') String? avatarUrl,
     String? email,
   }) = _UserSummary;

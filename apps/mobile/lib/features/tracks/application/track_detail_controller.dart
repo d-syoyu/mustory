@@ -77,8 +77,7 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
 
     try {
       await _repository.likeTrack(trackId);
-      // Refresh to ensure consistency with server
-      await loadTrackDetail();
+      // Optimistic update is sufficient - no need to reload entire detail
     } catch (e) {
       // Revert on error
       final revertedTrack = currentDetail.track.copyWith(
@@ -108,8 +107,7 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
 
     try {
       await _repository.unlikeTrack(trackId);
-      // Refresh to ensure consistency with server
-      await loadTrackDetail();
+      // Optimistic update is sufficient - no need to reload entire detail
     } catch (e) {
       // Revert on error
       final revertedTrack = currentDetail.track.copyWith(
@@ -140,8 +138,7 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
 
     try {
       await _repository.likeStory(storyId);
-      // Refresh to ensure consistency with server
-      await loadTrackDetail();
+      // Optimistic update is sufficient - no need to reload entire detail
     } catch (e) {
       // Revert on error
       final revertedStory = Map<String, dynamic>.from(currentStory);
@@ -171,8 +168,7 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
 
     try {
       await _repository.unlikeStory(storyId);
-      // Refresh to ensure consistency with server
-      await loadTrackDetail();
+      // Optimistic update is sufficient - no need to reload entire detail
     } catch (e) {
       // Revert on error
       final revertedStory = Map<String, dynamic>.from(currentStory);
@@ -202,8 +198,17 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
         commentId: comment.id,
       );
 
-      // Refresh to get updated comments with proper reply counts
-      await loadTrackDetail();
+      // Add comment to local state instead of full reload
+      final updatedComments = [comment, ...currentDetail.trackComments];
+      final updatedTrack = currentDetail.track.copyWith(
+        trackCommentCount: currentDetail.track.trackCommentCount + 1,
+      );
+      state = state.copyWith(
+        trackDetail: currentDetail.copyWith(
+          trackComments: updatedComments,
+          track: updatedTrack,
+        ),
+      );
     } catch (e) {
       state = state.copyWith(error: 'コメントの投稿に失敗しました');
     }
@@ -231,8 +236,17 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
         commentId: comment.id,
       );
 
-      // Refresh to get updated comments with proper reply counts
-      await loadTrackDetail();
+      // Add comment to local state instead of full reload
+      final updatedComments = [comment, ...currentDetail.storyComments];
+      final updatedTrack = currentDetail.track.copyWith(
+        storyCommentCount: currentDetail.track.storyCommentCount + 1,
+      );
+      state = state.copyWith(
+        trackDetail: currentDetail.copyWith(
+          storyComments: updatedComments,
+          track: updatedTrack,
+        ),
+      );
     } catch (e) {
       state = state.copyWith(error: 'ストーリーコメントの投稿に失敗しました');
     }

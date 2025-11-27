@@ -267,9 +267,9 @@ class __$$UserProfileImplCopyWithImpl<$Res>
 class _$UserProfileImpl implements _UserProfile {
   const _$UserProfileImpl(
       {required this.id,
-      required this.username,
-      required this.displayName,
-      required this.email,
+      this.username = '',
+      this.displayName = '',
+      this.email = '',
       @JsonKey(name: 'avatar_url') this.avatarUrl,
       this.bio,
       this.location,
@@ -286,10 +286,13 @@ class _$UserProfileImpl implements _UserProfile {
   @override
   final String id;
   @override
+  @JsonKey()
   final String username;
   @override
+  @JsonKey()
   final String displayName;
   @override
+  @JsonKey()
   final String email;
   @override
   @JsonKey(name: 'avatar_url')
@@ -388,9 +391,9 @@ class _$UserProfileImpl implements _UserProfile {
 abstract class _UserProfile implements UserProfile {
   const factory _UserProfile(
       {required final String id,
-      required final String username,
-      required final String displayName,
-      required final String email,
+      final String username,
+      final String displayName,
+      final String email,
       @JsonKey(name: 'avatar_url') final String? avatarUrl,
       final String? bio,
       final String? location,
@@ -589,8 +592,8 @@ class __$$UserSummaryImplCopyWithImpl<$Res>
 class _$UserSummaryImpl implements _UserSummary {
   const _$UserSummaryImpl(
       {required this.id,
-      required this.username,
-      required this.displayName,
+      this.username = '',
+      this.displayName = '',
       @JsonKey(name: 'avatar_url') this.avatarUrl,
       this.email});
 
@@ -600,8 +603,10 @@ class _$UserSummaryImpl implements _UserSummary {
   @override
   final String id;
   @override
+  @JsonKey()
   final String username;
   @override
+  @JsonKey()
   final String displayName;
   @override
   @JsonKey(name: 'avatar_url')
@@ -653,8 +658,8 @@ class _$UserSummaryImpl implements _UserSummary {
 abstract class _UserSummary implements UserSummary {
   const factory _UserSummary(
       {required final String id,
-      required final String username,
-      required final String displayName,
+      final String username,
+      final String displayName,
       @JsonKey(name: 'avatar_url') final String? avatarUrl,
       final String? email}) = _$UserSummaryImpl;
 

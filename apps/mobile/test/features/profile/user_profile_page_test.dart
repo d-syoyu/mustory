@@ -25,7 +25,7 @@ class _FakeProfileRepository extends ProfileRepository {
   );
 
   @override
-  Future<UserProfile> getUserProfile(String userId) async => profile;
+  Future<UserProfile> getUserProfile(String userId, {bool forceRefresh = false}) async => profile;
 }
 
 class _FakeAuthController extends StateNotifier<AppAuthState>

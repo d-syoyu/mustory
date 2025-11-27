@@ -215,23 +215,26 @@ class TrackDetailPage extends HookConsumerWidget {
       children: [
         const SizedBox(height: 20),
 
-        // 大きなカバーアート
+        // 大きなカバーアート with Hero animation
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40),
           child: AspectRatio(
             aspectRatio: 1,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: CachedNetworkImage(
-                imageUrl: track.artworkUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[850],
-                  child: const Center(child: CircularProgressIndicator()),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[850],
-                  child: const Icon(Icons.music_note, size: 80),
+            child: Hero(
+              tag: 'track-artwork-${track.id}',
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: CachedNetworkImage(
+                  imageUrl: track.artworkUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey[850],
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.grey[850],
+                    child: const Icon(Icons.music_note, size: 80),
+                  ),
                 ),
               ),
             ),

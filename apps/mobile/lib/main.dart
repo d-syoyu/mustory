@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'app/router.dart';
 import 'app/theme.dart';
+import 'core/analytics/analytics_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

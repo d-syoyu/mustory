@@ -84,7 +84,7 @@ class _FakeTracksRepository extends TracksRepository {
   );
 
   @override
-  Future<TrackDetail> getTrackDetail(String id) async {
+  Future<TrackDetail> getTrackDetail(String id, {bool forceRefresh = false}) async {
     return _detail;
   }
 

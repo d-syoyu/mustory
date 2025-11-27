@@ -9,8 +9,8 @@ part of 'feed_item.dart';
 _$FeedUserImpl _$$FeedUserImplFromJson(Map<String, dynamic> json) =>
     _$FeedUserImpl(
       id: json['id'] as String,
-      username: json['username'] as String,
-      displayName: json['displayName'] as String,
+      username: json['username'] as String? ?? '',
+      displayName: json['displayName'] as String? ?? '',
       avatarUrl: json['avatar_url'] as String?,
     );
 

@@ -51,10 +51,9 @@ class EditProfilePage extends HookConsumerWidget {
           appBar: AppBar(
             title: const Text('プロフィール編集'),
           ),
-          body: Padding(
+          body: ListView(
             padding: const EdgeInsets.all(16),
-            child: ListView(
-              children: [
+            children: [
                 TextFormField(
                   controller: displayNameController,
                   decoration: const InputDecoration(
@@ -169,9 +168,9 @@ class EditProfilePage extends HookConsumerWidget {
                     style: const TextStyle(color: Colors.red),
                   ),
                 ],
+                const SizedBox(height: 32),
               ],
             ),
-          ),
         );
       },
       orElse: () => const Scaffold(

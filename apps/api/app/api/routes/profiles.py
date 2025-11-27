@@ -241,6 +241,42 @@ async def create_avatar_presign_url(
     )
 
 
+@router.get("/profiles/search", response_model=list[UserSummary])
+async def search_users(
+    q: str = Query(..., min_length=1, description="Search query"),
+    current_user: CurrentUser = None,
+    db: DbSession = None,
+    limit: int = Query(default=20, ge=1, le=100, description="Number of users to return"),
+) -> list[UserSummary]:
+    """
+    Search users by username or display name.
+
+    - **q**: Search query (required, min 1 character)
+    - **limit**: Maximum number of users to return (1-100, default 20)
+    """
+    search_pattern = f"%{q}%"
+
+    results = db.execute(
+        select(User)
+        .where(
+            (User.username.ilike(search_pattern)) |
+            (User.display_name.ilike(search_pattern))
+        )
+        .order_by(User.display_name)
+        .limit(limit)
+    ).scalars().all()
+
+    return [
+        UserSummary(
+            id=str(user.id),
+            username=user.username,
+            display_name=user.display_name,
+            avatar_url=user.avatar_url,
+        )
+        for user in results
+    ]
+
+
 @router.get("/profiles/{user_id}", response_model=UserProfile)
 async def get_user_profile(
     user_id: UUID,

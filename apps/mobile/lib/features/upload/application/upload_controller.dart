@@ -33,6 +33,7 @@ class UploadController extends StateNotifier<UploadState> {
     File? artworkFile,
     String? storyLead,
     String? storyBody,
+    List<String>? tags,
   }) async {
     try {
       // Step 1: Get file information
@@ -60,6 +61,7 @@ class UploadController extends StateNotifier<UploadState> {
         artworkExtension: artworkExtension,
         storyLead: storyLead,
         storyBody: storyBody,
+        tags: tags ?? [],
       );
 
       final initResponse = await _repository.initializeUpload(initRequest);
@@ -170,6 +172,7 @@ class UploadController extends StateNotifier<UploadState> {
     File? artworkFile,
     String? storyLead,
     String? storyBody,
+    List<String>? tags,
   }) async {
     reset();
     await uploadTrack(
@@ -179,6 +182,7 @@ class UploadController extends StateNotifier<UploadState> {
       artworkFile: artworkFile,
       storyLead: storyLead,
       storyBody: storyBody,
+      tags: tags,
     );
   }
 }

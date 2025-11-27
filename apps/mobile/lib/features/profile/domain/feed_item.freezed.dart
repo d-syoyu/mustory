@@ -148,8 +148,8 @@ class __$$FeedUserImplCopyWithImpl<$Res>
 class _$FeedUserImpl implements _FeedUser {
   const _$FeedUserImpl(
       {required this.id,
-      required this.username,
-      required this.displayName,
+      this.username = '',
+      this.displayName = '',
       @JsonKey(name: 'avatar_url') this.avatarUrl});
 
   factory _$FeedUserImpl.fromJson(Map<String, dynamic> json) =>
@@ -158,8 +158,10 @@ class _$FeedUserImpl implements _FeedUser {
   @override
   final String id;
   @override
+  @JsonKey()
   final String username;
   @override
+  @JsonKey()
   final String displayName;
   @override
   @JsonKey(name: 'avatar_url')
@@ -208,8 +210,8 @@ class _$FeedUserImpl implements _FeedUser {
 abstract class _FeedUser implements FeedUser {
   const factory _FeedUser(
       {required final String id,
-      required final String username,
-      required final String displayName,
+      final String username,
+      final String displayName,
       @JsonKey(name: 'avatar_url') final String? avatarUrl}) = _$FeedUserImpl;
 
   factory _FeedUser.fromJson(Map<String, dynamic> json) =

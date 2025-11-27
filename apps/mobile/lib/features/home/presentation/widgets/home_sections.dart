@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../core/widgets/skeleton_loader.dart';
+import '../../../profile/application/profile_controller.dart';
 import '../../../tracks/application/recommended_tracks_provider.dart';
 import '../../../tracks/application/tracks_controller.dart';
 import '../../../tracks/presentation/widgets/horizontal_track_card.dart';
-import '../../../tracks/presentation/widgets/track_card.dart';
+import '../../../tracks/presentation/widgets/compact_track_tile.dart';
 
 class RecommendedSection extends ConsumerWidget {
   const RecommendedSection({super.key});
@@ -95,6 +96,7 @@ class RecommendedSection extends ConsumerWidget {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(
                         Icons.wifi_tethering_error,
@@ -105,7 +107,7 @@ class RecommendedSection extends ConsumerWidget {
                         'おすすめの読み込みに失敗しました',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       Text(
                         error.toString(),
                         style: Theme.of(context)
@@ -113,8 +115,10 @@ class RecommendedSection extends ConsumerWidget {
                             .bodySmall
                             ?.copyWith(color: Colors.orange[900]),
                         textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       OutlinedButton(
                         onPressed: () {
                           ref.invalidate(recommendedTracksProvider);
@@ -308,8 +312,9 @@ class TrackListSection extends ConsumerWidget {
           (context, index) {
             if (index < tracksState.tracks.length) {
               final track = tracksState.tracks[index];
-              return TrackCard(
+              return CompactTrackTile(
                 track: track,
+                index: index + 1,
                 onTap: () {
                   context.go('/tracks/${track.id}', extra: track);
                 },

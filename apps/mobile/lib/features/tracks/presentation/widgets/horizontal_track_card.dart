@@ -32,11 +32,13 @@ class HorizontalTrackCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Artwork with play indicator
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: CachedNetworkImage(
+            Hero(
+              tag: 'track-artwork-${track.id}',
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: CachedNetworkImage(
                     imageUrl: track.artworkUrl,
                     height: 190,
                     width: 190,
@@ -154,7 +156,8 @@ class HorizontalTrackCard extends ConsumerWidget {
                       ),
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
 
             const SizedBox(height: 10),

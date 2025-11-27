@@ -29,6 +29,15 @@ mixin _$Track {
   bool get isLiked => throw _privateConstructorUsedError;
   Map<String, dynamic>? get story => throw _privateConstructorUsedError;
   UserSummary? get user => throw _privateConstructorUsedError;
+  DateTime? get createdAt =>
+      throw _privateConstructorUsedError; // Audio features
+  int? get durationSeconds => throw _privateConstructorUsedError;
+  double? get bpm => throw _privateConstructorUsedError;
+  double? get loudnessLufs => throw _privateConstructorUsedError;
+  double? get moodValence => throw _privateConstructorUsedError;
+  double? get moodEnergy => throw _privateConstructorUsedError;
+  bool? get hasVocals => throw _privateConstructorUsedError;
+  List<String> get tags => throw _privateConstructorUsedError;
 
   /// Create a copy of Track
   /// with the given fields replaced by the non-null parameter values.
@@ -54,7 +63,15 @@ abstract class $TrackCopyWith<$Res> {
       int storyCommentCount,
       bool isLiked,
       Map<String, dynamic>? story,
-      UserSummary? user});
+      UserSummary? user,
+      DateTime? createdAt,
+      int? durationSeconds,
+      double? bpm,
+      double? loudnessLufs,
+      double? moodValence,
+      double? moodEnergy,
+      bool? hasVocals,
+      List<String> tags});
 
   $UserSummaryCopyWith<$Res>? get user;
 }
@@ -87,6 +104,14 @@ class _$TrackCopyWithImpl<$Res, $Val extends Track>
     Object? isLiked = null,
     Object? story = freezed,
     Object? user = freezed,
+    Object? createdAt = freezed,
+    Object? durationSeconds = freezed,
+    Object? bpm = freezed,
+    Object? loudnessLufs = freezed,
+    Object? moodValence = freezed,
+    Object? moodEnergy = freezed,
+    Object? hasVocals = freezed,
+    Object? tags = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -141,6 +166,38 @@ class _$TrackCopyWithImpl<$Res, $Val extends Track>
           ? _value.user
           : user // ignore: cast_nullable_to_non_nullable
               as UserSummary?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      durationSeconds: freezed == durationSeconds
+          ? _value.durationSeconds
+          : durationSeconds // ignore: cast_nullable_to_non_nullable
+              as int?,
+      bpm: freezed == bpm
+          ? _value.bpm
+          : bpm // ignore: cast_nullable_to_non_nullable
+              as double?,
+      loudnessLufs: freezed == loudnessLufs
+          ? _value.loudnessLufs
+          : loudnessLufs // ignore: cast_nullable_to_non_nullable
+              as double?,
+      moodValence: freezed == moodValence
+          ? _value.moodValence
+          : moodValence // ignore: cast_nullable_to_non_nullable
+              as double?,
+      moodEnergy: freezed == moodEnergy
+          ? _value.moodEnergy
+          : moodEnergy // ignore: cast_nullable_to_non_nullable
+              as double?,
+      hasVocals: freezed == hasVocals
+          ? _value.hasVocals
+          : hasVocals // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      tags: null == tags
+          ? _value.tags
+          : tags // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ) as $Val);
   }
 
@@ -179,7 +236,15 @@ abstract class _$$TrackImplCopyWith<$Res> implements $TrackCopyWith<$Res> {
       int storyCommentCount,
       bool isLiked,
       Map<String, dynamic>? story,
-      UserSummary? user});
+      UserSummary? user,
+      DateTime? createdAt,
+      int? durationSeconds,
+      double? bpm,
+      double? loudnessLufs,
+      double? moodValence,
+      double? moodEnergy,
+      bool? hasVocals,
+      List<String> tags});
 
   @override
   $UserSummaryCopyWith<$Res>? get user;
@@ -211,6 +276,14 @@ class __$$TrackImplCopyWithImpl<$Res>
     Object? isLiked = null,
     Object? story = freezed,
     Object? user = freezed,
+    Object? createdAt = freezed,
+    Object? durationSeconds = freezed,
+    Object? bpm = freezed,
+    Object? loudnessLufs = freezed,
+    Object? moodValence = freezed,
+    Object? moodEnergy = freezed,
+    Object? hasVocals = freezed,
+    Object? tags = null,
   }) {
     return _then(_$TrackImpl(
       id: null == id
@@ -265,6 +338,38 @@ class __$$TrackImplCopyWithImpl<$Res>
           ? _value.user
           : user // ignore: cast_nullable_to_non_nullable
               as UserSummary?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      durationSeconds: freezed == durationSeconds
+          ? _value.durationSeconds
+          : durationSeconds // ignore: cast_nullable_to_non_nullable
+              as int?,
+      bpm: freezed == bpm
+          ? _value.bpm
+          : bpm // ignore: cast_nullable_to_non_nullable
+              as double?,
+      loudnessLufs: freezed == loudnessLufs
+          ? _value.loudnessLufs
+          : loudnessLufs // ignore: cast_nullable_to_non_nullable
+              as double?,
+      moodValence: freezed == moodValence
+          ? _value.moodValence
+          : moodValence // ignore: cast_nullable_to_non_nullable
+              as double?,
+      moodEnergy: freezed == moodEnergy
+          ? _value.moodEnergy
+          : moodEnergy // ignore: cast_nullable_to_non_nullable
+              as double?,
+      hasVocals: freezed == hasVocals
+          ? _value.hasVocals
+          : hasVocals // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      tags: null == tags
+          ? _value._tags
+          : tags // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ));
   }
 }
@@ -285,8 +390,17 @@ class _$TrackImpl extends _Track {
       this.storyCommentCount = 0,
       this.isLiked = false,
       final Map<String, dynamic>? story,
-      this.user})
+      this.user,
+      this.createdAt,
+      this.durationSeconds,
+      this.bpm,
+      this.loudnessLufs,
+      this.moodValence,
+      this.moodEnergy,
+      this.hasVocals,
+      final List<String> tags = const <String>[]})
       : _story = story,
+        _tags = tags,
         super._();
 
   @override
@@ -328,10 +442,33 @@ class _$TrackImpl extends _Track {
 
   @override
   final UserSummary? user;
+  @override
+  final DateTime? createdAt;
+// Audio features
+  @override
+  final int? durationSeconds;
+  @override
+  final double? bpm;
+  @override
+  final double? loudnessLufs;
+  @override
+  final double? moodValence;
+  @override
+  final double? moodEnergy;
+  @override
+  final bool? hasVocals;
+  final List<String> _tags;
+  @override
+  @JsonKey()
+  List<String> get tags {
+    if (_tags is EqualUnmodifiableListView) return _tags;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_tags);
+  }
 
   @override
   String toString() {
-    return 'Track(id: $id, title: $title, artistName: $artistName, userId: $userId, artworkUrl: $artworkUrl, hlsUrl: $hlsUrl, likeCount: $likeCount, viewCount: $viewCount, trackCommentCount: $trackCommentCount, storyCommentCount: $storyCommentCount, isLiked: $isLiked, story: $story, user: $user)';
+    return 'Track(id: $id, title: $title, artistName: $artistName, userId: $userId, artworkUrl: $artworkUrl, hlsUrl: $hlsUrl, likeCount: $likeCount, viewCount: $viewCount, trackCommentCount: $trackCommentCount, storyCommentCount: $storyCommentCount, isLiked: $isLiked, story: $story, user: $user, createdAt: $createdAt, durationSeconds: $durationSeconds, bpm: $bpm, loudnessLufs: $loudnessLufs, moodValence: $moodValence, moodEnergy: $moodEnergy, hasVocals: $hasVocals, tags: $tags)';
   }
 
   @override
@@ -357,25 +494,48 @@ class _$TrackImpl extends _Track {
                 other.storyCommentCount == storyCommentCount) &&
             (identical(other.isLiked, isLiked) || other.isLiked == isLiked) &&
             const DeepCollectionEquality().equals(other._story, _story) &&
-            (identical(other.user, user) || other.user == user));
+            (identical(other.user, user) || other.user == user) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
+            (identical(other.durationSeconds, durationSeconds) ||
+                other.durationSeconds == durationSeconds) &&
+            (identical(other.bpm, bpm) || other.bpm == bpm) &&
+            (identical(other.loudnessLufs, loudnessLufs) ||
+                other.loudnessLufs == loudnessLufs) &&
+            (identical(other.moodValence, moodValence) ||
+                other.moodValence == moodValence) &&
+            (identical(other.moodEnergy, moodEnergy) ||
+                other.moodEnergy == moodEnergy) &&
+            (identical(other.hasVocals, hasVocals) ||
+                other.hasVocals == hasVocals) &&
+            const DeepCollectionEquality().equals(other._tags, _tags));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      title,
-      artistName,
-      userId,
-      artworkUrl,
-      hlsUrl,
-      likeCount,
-      viewCount,
-      trackCommentCount,
-      storyCommentCount,
-      isLiked,
-      const DeepCollectionEquality().hash(_story),
-      user);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        title,
+        artistName,
+        userId,
+        artworkUrl,
+        hlsUrl,
+        likeCount,
+        viewCount,
+        trackCommentCount,
+        storyCommentCount,
+        isLiked,
+        const DeepCollectionEquality().hash(_story),
+        user,
+        createdAt,
+        durationSeconds,
+        bpm,
+        loudnessLufs,
+        moodValence,
+        moodEnergy,
+        hasVocals,
+        const DeepCollectionEquality().hash(_tags)
+      ]);
 
   /// Create a copy of Track
   /// with the given fields replaced by the non-null parameter values.
@@ -400,7 +560,15 @@ abstract class _Track extends Track {
       final int storyCommentCount,
       final bool isLiked,
       final Map<String, dynamic>? story,
-      final UserSummary? user}) = _$TrackImpl;
+      final UserSummary? user,
+      final DateTime? createdAt,
+      final int? durationSeconds,
+      final double? bpm,
+      final double? loudnessLufs,
+      final double? moodValence,
+      final double? moodEnergy,
+      final bool? hasVocals,
+      final List<String> tags}) = _$TrackImpl;
   const _Track._() : super._();
 
   @override
@@ -429,6 +597,22 @@ abstract class _Track extends Track {
   Map<String, dynamic>? get story;
   @override
   UserSummary? get user;
+  @override
+  DateTime? get createdAt; // Audio features
+  @override
+  int? get durationSeconds;
+  @override
+  double? get bpm;
+  @override
+  double? get loudnessLufs;
+  @override
+  double? get moodValence;
+  @override
+  double? get moodEnergy;
+  @override
+  bool? get hasVocals;
+  @override
+  List<String> get tags;
 
   /// Create a copy of Track
   /// with the given fields replaced by the non-null parameter values.

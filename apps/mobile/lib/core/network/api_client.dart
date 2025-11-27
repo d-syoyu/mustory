@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../auth/auth_controller.dart';
@@ -23,8 +24,9 @@ final dioProvider = Provider<Dio>(
     final dio = Dio(
       BaseOptions(
         baseUrl: dotenv.env['MUSTORY_API_BASE_URL'] ?? 'http://localhost:8000',
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 30),
+        // Reduced timeouts for better UX
+        connectTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 15),
       ),
     );
 
@@ -33,11 +35,13 @@ final dioProvider = Provider<Dio>(
       AuthInterceptor(() => ref.read(accessTokenProvider)),
     );
 
-    // Add logging interceptor
-    dio.interceptors.add(LogInterceptor(
-      requestBody: true,
-      responseBody: true,
-    ));
+    // Only add logging interceptor in debug mode
+    if (kDebugMode) {
+      dio.interceptors.add(LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+      ));
+    }
 
     return dio;
   },

@@ -35,47 +35,49 @@ class TrackCard extends ConsumerWidget {
             // Artwork Image with Playing Indicator
             AspectRatio(
               aspectRatio: 1.0,
-              child: Stack(
-                children: [
-                  CachedNetworkImage(
-                    imageUrl: track.artworkUrl,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    memCacheWidth: 600,
-                    placeholder: (context, url) => Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            theme.colorScheme.surfaceContainerHighest,
-                            theme.colorScheme.surfaceContainerLow,
-                          ],
+              child: Hero(
+                tag: 'track-artwork-${track.id}',
+                child: Stack(
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: track.artworkUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      memCacheWidth: 600,
+                      placeholder: (context, url) => Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              theme.colorScheme.surfaceContainerHighest,
+                              theme.colorScheme.surfaceContainerLow,
+                            ],
+                          ),
+                        ),
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       ),
-                      child: const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            theme.colorScheme.surfaceContainerHighest,
-                            theme.colorScheme.surfaceContainerLow,
-                          ],
+                      errorWidget: (context, url, error) => Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              theme.colorScheme.surfaceContainerHighest,
+                              theme.colorScheme.surfaceContainerLow,
+                            ],
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.music_note_rounded,
+                          size: 72,
+                          color: theme.colorScheme.primary.withValues(alpha: 0.3),
                         ),
                       ),
-                      child: Icon(
-                        Icons.music_note_rounded,
-                        size: 72,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                      ),
                     ),
-                  ),
                   // Playing indicator overlay with blur effect
                   if (isPlaying)
                     Positioned.fill(
@@ -157,21 +159,22 @@ class TrackCard extends ConsumerWidget {
                       ),
                     ),
                   // Loading indicator
-                  if (isLoading)
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 3,
+                    if (isLoading)
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 3,
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
 

@@ -7,6 +7,26 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import '../application/upload_controller.dart';
 
+/// Available tags for track upload
+const _availableTags = [
+  'LoFi',
+  'Jazz',
+  'アンビエント',
+  'エレクトロニカ',
+  '弾き語り',
+  'インスト',
+  '作業用',
+  'チル',
+  'ロック',
+  'ポップ',
+  'クラシック',
+  'R&B',
+  'ヒップホップ',
+  'EDM',
+  'フォーク',
+  'ボーカル',
+];
+
 class TrackUploadPage extends HookConsumerWidget {
   const TrackUploadPage({super.key});
 
@@ -19,6 +39,7 @@ class TrackUploadPage extends HookConsumerWidget {
     final storyBodyController = useTextEditingController();
     final audioFile = useState<File?>(null);
     final artworkFile = useState<File?>(null);
+    final selectedTags = useState<Set<String>>({});
     final formKey = useMemoized(() => GlobalKey<FormState>());
 
     return Scaffold(
@@ -36,6 +57,7 @@ class TrackUploadPage extends HookConsumerWidget {
           storyBodyController: storyBodyController,
           audioFile: audioFile,
           artworkFile: artworkFile,
+          selectedTags: selectedTags,
         ),
         picking: () => const Center(
           child: CircularProgressIndicator(),
@@ -72,6 +94,7 @@ class TrackUploadPage extends HookConsumerWidget {
           storyBodyController: storyBodyController,
           audioFile: audioFile,
           artworkFile: artworkFile,
+          selectedTags: selectedTags,
         ),
       ),
     );
@@ -87,6 +110,7 @@ class TrackUploadPage extends HookConsumerWidget {
     required TextEditingController storyBodyController,
     required ValueNotifier<File?> audioFile,
     required ValueNotifier<File?> artworkFile,
+    required ValueNotifier<Set<String>> selectedTags,
   }) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -220,6 +244,43 @@ class TrackUploadPage extends HookConsumerWidget {
             ),
             const SizedBox(height: 24),
 
+            // Tags Section
+            Text(
+              'ジャンル・タグ',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '該当するタグを選択してください（複数選択可）',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _availableTags.map((tag) {
+                final isSelected = selectedTags.value.contains(tag);
+                return FilterChip(
+                  label: Text(tag),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    final newTags = Set<String>.from(selectedTags.value);
+                    if (selected) {
+                      newTags.add(tag);
+                    } else {
+                      newTags.remove(tag);
+                    }
+                    selectedTags.value = newTags;
+                  },
+                  selectedColor: Theme.of(context).colorScheme.primaryContainer,
+                  checkmarkColor: Theme.of(context).colorScheme.primary,
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+
             // Story Section
             Text(
               'ストーリー (Optional)',
@@ -264,6 +325,7 @@ class TrackUploadPage extends HookConsumerWidget {
                               artworkFile: artworkFile.value,
                               storyLead: storyLead.isNotEmpty ? storyLead : null,
                               storyBody: storyBody.isNotEmpty ? storyBody : null,
+                              tags: selectedTags.value.toList(),
                             );
                       }
                     },
@@ -390,6 +452,7 @@ class TrackUploadPage extends HookConsumerWidget {
     required TextEditingController storyBodyController,
     required ValueNotifier<File?> audioFile,
     required ValueNotifier<File?> artworkFile,
+    required ValueNotifier<Set<String>> selectedTags,
   }) {
     return Center(
       child: Padding(
@@ -427,6 +490,7 @@ class TrackUploadPage extends HookConsumerWidget {
                         artworkFile: artworkFile.value,
                         storyLead: storyLead.isNotEmpty ? storyLead : null,
                         storyBody: storyBody.isNotEmpty ? storyBody : null,
+                        tags: selectedTags.value.toList(),
                       );
                 }
               },

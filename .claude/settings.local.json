@@ -34,7 +34,12 @@
       "Bash(flutter pub run build_runner build:*)",
       "Bash(timeout 20 bash -c:*)",
       "Bash(flutter devices:*)",
-      "Bash(docker logs:*)"
+      "Bash(docker logs:*)",
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "WebSearch",
+      "Bash(dir:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []
