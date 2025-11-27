@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mustory_mobile/features/tracks/domain/track.dart';
 import '../../../../core/audio/audio_player_controller.dart';
 
@@ -202,6 +203,55 @@ class TrackCard extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+
+                  // User Info (if available)
+                  if (track.user != null) ...[
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        final router = GoRouter.of(context);
+                        router.push('/users/${track.user!.id}');
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 12,
+                              backgroundImage: track.user!.avatarUrl != null
+                                  ? NetworkImage(track.user!.avatarUrl!)
+                                  : null,
+                              child: track.user!.avatarUrl == null
+                                  ? Icon(
+                                      Icons.person,
+                                      size: 12,
+                                      color: theme.colorScheme.primary,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '@${track.user!.username}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              size: 16,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
 
                   // Stats Row

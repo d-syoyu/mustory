@@ -6,6 +6,7 @@ import 'package:mustory_mobile/features/profile/presentation/my_page.dart';
 import 'package:mustory_mobile/features/profile/presentation/user_profile_page.dart';
 import 'package:mustory_mobile/features/profile/presentation/followers_page.dart';
 import 'package:mustory_mobile/features/profile/presentation/following_page.dart';
+import 'package:mustory_mobile/features/profile/presentation/edit_profile_page.dart';
 import 'package:mustory_mobile/features/tracks/presentation/track_detail_page.dart';
 import 'package:mustory_mobile/features/tracks/presentation/my_tracks_page.dart';
 import 'package:mustory_mobile/features/tracks/presentation/liked_page.dart';
@@ -130,6 +131,11 @@ final appRouterProvider = Provider<GoRouter>(
                   name: 'profile',
                   builder: (context, state) => const MyPage(),
                   routes: [
+                    GoRoute(
+                      path: 'edit',
+                      name: 'profile-edit',
+                      builder: (context, state) => const EditProfilePage(),
+                    ),
                     GoRoute(
                       path: 'upload',
                       name: 'upload',

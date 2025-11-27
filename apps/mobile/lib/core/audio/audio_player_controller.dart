@@ -7,6 +7,7 @@ import '../../features/tracks/domain/track.dart';
 import '../../features/tracks/data/tracks_repository.dart';
 import '../../features/tracks/application/tracks_controller.dart';
 import 'audio_handler.dart';
+import '../analytics/analytics_service.dart';
 
 part 'audio_player_controller.freezed.dart';
 
@@ -22,11 +23,18 @@ class AudioPlayerState with _$AudioPlayerState {
 }
 
 class AudioPlayerController extends StateNotifier<AudioPlayerState> {
-  AudioPlayerController(this._tracksRepository) : super(const AudioPlayerState()) {
-    _init();
+  AudioPlayerController(
+    this._tracksRepository,
+    this._analyticsService, {
+    bool testMode = false,
+  }) : super(const AudioPlayerState()) {
+    if (!testMode) {
+      _init();
+    }
   }
 
   final TracksRepository _tracksRepository;
+  final AnalyticsService _analyticsService;
   MustoryAudioHandler? _audioHandler;
 
   Future<void> _init() async {
@@ -95,6 +103,9 @@ class AudioPlayerController extends StateNotifier<AudioPlayerState> {
         artworkUrl: track.artworkUrl,
       );
 
+      // Log analytics event
+      await _analyticsService.logTrackPlayed(track.id);
+
       // Increment view count when track starts playing
       // Fire and forget - don't wait for completion
       _tracksRepository.incrementViewCount(track.id);
@@ -150,5 +161,6 @@ final audioPlayerControllerProvider =
     StateNotifierProvider<AudioPlayerController, AudioPlayerState>((ref) {
   // Import the tracksRepositoryProvider from tracks_controller
   final tracksRepository = ref.watch(tracksRepositoryProvider);
-  return AudioPlayerController(tracksRepository);
+  final analyticsService = ref.watch(analyticsServiceProvider);
+  return AudioPlayerController(tracksRepository, analyticsService);
 });

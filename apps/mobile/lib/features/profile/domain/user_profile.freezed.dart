@@ -21,8 +21,15 @@ UserProfile _$UserProfileFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$UserProfile {
   String get id => throw _privateConstructorUsedError;
+  String get username => throw _privateConstructorUsedError;
   String get displayName => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
+  @JsonKey(name: 'avatar_url')
+  String? get avatarUrl => throw _privateConstructorUsedError;
+  String? get bio => throw _privateConstructorUsedError;
+  String? get location => throw _privateConstructorUsedError;
+  @JsonKey(name: 'link_url')
+  String? get linkUrl => throw _privateConstructorUsedError;
   int get trackCount => throw _privateConstructorUsedError;
   int get storyCount => throw _privateConstructorUsedError;
   int get followerCount => throw _privateConstructorUsedError;
@@ -47,8 +54,13 @@ abstract class $UserProfileCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
+      String username,
       String displayName,
       String email,
+      @JsonKey(name: 'avatar_url') String? avatarUrl,
+      String? bio,
+      String? location,
+      @JsonKey(name: 'link_url') String? linkUrl,
       int trackCount,
       int storyCount,
       int followerCount,
@@ -72,8 +84,13 @@ class _$UserProfileCopyWithImpl<$Res, $Val extends UserProfile>
   @override
   $Res call({
     Object? id = null,
+    Object? username = null,
     Object? displayName = null,
     Object? email = null,
+    Object? avatarUrl = freezed,
+    Object? bio = freezed,
+    Object? location = freezed,
+    Object? linkUrl = freezed,
     Object? trackCount = null,
     Object? storyCount = null,
     Object? followerCount = null,
@@ -85,6 +102,10 @@ class _$UserProfileCopyWithImpl<$Res, $Val extends UserProfile>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
+      username: null == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
+              as String,
       displayName: null == displayName
           ? _value.displayName
           : displayName // ignore: cast_nullable_to_non_nullable
@@ -93,6 +114,22 @@ class _$UserProfileCopyWithImpl<$Res, $Val extends UserProfile>
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
               as String,
+      avatarUrl: freezed == avatarUrl
+          ? _value.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      bio: freezed == bio
+          ? _value.bio
+          : bio // ignore: cast_nullable_to_non_nullable
+              as String?,
+      location: freezed == location
+          ? _value.location
+          : location // ignore: cast_nullable_to_non_nullable
+              as String?,
+      linkUrl: freezed == linkUrl
+          ? _value.linkUrl
+          : linkUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
       trackCount: null == trackCount
           ? _value.trackCount
           : trackCount // ignore: cast_nullable_to_non_nullable
@@ -127,8 +164,13 @@ abstract class _$$UserProfileImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
+      String username,
       String displayName,
       String email,
+      @JsonKey(name: 'avatar_url') String? avatarUrl,
+      String? bio,
+      String? location,
+      @JsonKey(name: 'link_url') String? linkUrl,
       int trackCount,
       int storyCount,
       int followerCount,
@@ -150,8 +192,13 @@ class __$$UserProfileImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
+    Object? username = null,
     Object? displayName = null,
     Object? email = null,
+    Object? avatarUrl = freezed,
+    Object? bio = freezed,
+    Object? location = freezed,
+    Object? linkUrl = freezed,
     Object? trackCount = null,
     Object? storyCount = null,
     Object? followerCount = null,
@@ -163,6 +210,10 @@ class __$$UserProfileImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
+      username: null == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
+              as String,
       displayName: null == displayName
           ? _value.displayName
           : displayName // ignore: cast_nullable_to_non_nullable
@@ -171,6 +222,22 @@ class __$$UserProfileImplCopyWithImpl<$Res>
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
               as String,
+      avatarUrl: freezed == avatarUrl
+          ? _value.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      bio: freezed == bio
+          ? _value.bio
+          : bio // ignore: cast_nullable_to_non_nullable
+              as String?,
+      location: freezed == location
+          ? _value.location
+          : location // ignore: cast_nullable_to_non_nullable
+              as String?,
+      linkUrl: freezed == linkUrl
+          ? _value.linkUrl
+          : linkUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
       trackCount: null == trackCount
           ? _value.trackCount
           : trackCount // ignore: cast_nullable_to_non_nullable
@@ -200,8 +267,13 @@ class __$$UserProfileImplCopyWithImpl<$Res>
 class _$UserProfileImpl implements _UserProfile {
   const _$UserProfileImpl(
       {required this.id,
+      required this.username,
       required this.displayName,
       required this.email,
+      @JsonKey(name: 'avatar_url') this.avatarUrl,
+      this.bio,
+      this.location,
+      @JsonKey(name: 'link_url') this.linkUrl,
       this.trackCount = 0,
       this.storyCount = 0,
       this.followerCount = 0,
@@ -214,9 +286,21 @@ class _$UserProfileImpl implements _UserProfile {
   @override
   final String id;
   @override
+  final String username;
+  @override
   final String displayName;
   @override
   final String email;
+  @override
+  @JsonKey(name: 'avatar_url')
+  final String? avatarUrl;
+  @override
+  final String? bio;
+  @override
+  final String? location;
+  @override
+  @JsonKey(name: 'link_url')
+  final String? linkUrl;
   @override
   @JsonKey()
   final int trackCount;
@@ -235,7 +319,7 @@ class _$UserProfileImpl implements _UserProfile {
 
   @override
   String toString() {
-    return 'UserProfile(id: $id, displayName: $displayName, email: $email, trackCount: $trackCount, storyCount: $storyCount, followerCount: $followerCount, followingCount: $followingCount, isFollowedByMe: $isFollowedByMe)';
+    return 'UserProfile(id: $id, username: $username, displayName: $displayName, email: $email, avatarUrl: $avatarUrl, bio: $bio, location: $location, linkUrl: $linkUrl, trackCount: $trackCount, storyCount: $storyCount, followerCount: $followerCount, followingCount: $followingCount, isFollowedByMe: $isFollowedByMe)';
   }
 
   @override
@@ -244,9 +328,17 @@ class _$UserProfileImpl implements _UserProfile {
         (other.runtimeType == runtimeType &&
             other is _$UserProfileImpl &&
             (identical(other.id, id) || other.id == id) &&
+            (identical(other.username, username) ||
+                other.username == username) &&
             (identical(other.displayName, displayName) ||
                 other.displayName == displayName) &&
             (identical(other.email, email) || other.email == email) &&
+            (identical(other.avatarUrl, avatarUrl) ||
+                other.avatarUrl == avatarUrl) &&
+            (identical(other.bio, bio) || other.bio == bio) &&
+            (identical(other.location, location) ||
+                other.location == location) &&
+            (identical(other.linkUrl, linkUrl) || other.linkUrl == linkUrl) &&
             (identical(other.trackCount, trackCount) ||
                 other.trackCount == trackCount) &&
             (identical(other.storyCount, storyCount) ||
@@ -261,8 +353,21 @@ class _$UserProfileImpl implements _UserProfile {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, displayName, email,
-      trackCount, storyCount, followerCount, followingCount, isFollowedByMe);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      username,
+      displayName,
+      email,
+      avatarUrl,
+      bio,
+      location,
+      linkUrl,
+      trackCount,
+      storyCount,
+      followerCount,
+      followingCount,
+      isFollowedByMe);
 
   /// Create a copy of UserProfile
   /// with the given fields replaced by the non-null parameter values.
@@ -283,8 +388,13 @@ class _$UserProfileImpl implements _UserProfile {
 abstract class _UserProfile implements UserProfile {
   const factory _UserProfile(
       {required final String id,
+      required final String username,
       required final String displayName,
       required final String email,
+      @JsonKey(name: 'avatar_url') final String? avatarUrl,
+      final String? bio,
+      final String? location,
+      @JsonKey(name: 'link_url') final String? linkUrl,
       final int trackCount,
       final int storyCount,
       final int followerCount,
@@ -297,9 +407,21 @@ abstract class _UserProfile implements UserProfile {
   @override
   String get id;
   @override
+  String get username;
+  @override
   String get displayName;
   @override
   String get email;
+  @override
+  @JsonKey(name: 'avatar_url')
+  String? get avatarUrl;
+  @override
+  String? get bio;
+  @override
+  String? get location;
+  @override
+  @JsonKey(name: 'link_url')
+  String? get linkUrl;
   @override
   int get trackCount;
   @override
@@ -326,7 +448,10 @@ UserSummary _$UserSummaryFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$UserSummary {
   String get id => throw _privateConstructorUsedError;
+  String get username => throw _privateConstructorUsedError;
   String get displayName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'avatar_url')
+  String? get avatarUrl => throw _privateConstructorUsedError;
   String? get email => throw _privateConstructorUsedError;
 
   /// Serializes this UserSummary to a JSON map.
@@ -345,7 +470,12 @@ abstract class $UserSummaryCopyWith<$Res> {
           UserSummary value, $Res Function(UserSummary) then) =
       _$UserSummaryCopyWithImpl<$Res, UserSummary>;
   @useResult
-  $Res call({String id, String displayName, String? email});
+  $Res call(
+      {String id,
+      String username,
+      String displayName,
+      @JsonKey(name: 'avatar_url') String? avatarUrl,
+      String? email});
 }
 
 /// @nodoc
@@ -364,7 +494,9 @@ class _$UserSummaryCopyWithImpl<$Res, $Val extends UserSummary>
   @override
   $Res call({
     Object? id = null,
+    Object? username = null,
     Object? displayName = null,
+    Object? avatarUrl = freezed,
     Object? email = freezed,
   }) {
     return _then(_value.copyWith(
@@ -372,10 +504,18 @@ class _$UserSummaryCopyWithImpl<$Res, $Val extends UserSummary>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
+      username: null == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
+              as String,
       displayName: null == displayName
           ? _value.displayName
           : displayName // ignore: cast_nullable_to_non_nullable
               as String,
+      avatarUrl: freezed == avatarUrl
+          ? _value.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
       email: freezed == email
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
@@ -392,7 +532,12 @@ abstract class _$$UserSummaryImplCopyWith<$Res>
       __$$UserSummaryImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String id, String displayName, String? email});
+  $Res call(
+      {String id,
+      String username,
+      String displayName,
+      @JsonKey(name: 'avatar_url') String? avatarUrl,
+      String? email});
 }
 
 /// @nodoc
@@ -409,7 +554,9 @@ class __$$UserSummaryImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
+    Object? username = null,
     Object? displayName = null,
+    Object? avatarUrl = freezed,
     Object? email = freezed,
   }) {
     return _then(_$UserSummaryImpl(
@@ -417,10 +564,18 @@ class __$$UserSummaryImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
+      username: null == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
+              as String,
       displayName: null == displayName
           ? _value.displayName
           : displayName // ignore: cast_nullable_to_non_nullable
               as String,
+      avatarUrl: freezed == avatarUrl
+          ? _value.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
       email: freezed == email
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
@@ -433,7 +588,11 @@ class __$$UserSummaryImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$UserSummaryImpl implements _UserSummary {
   const _$UserSummaryImpl(
-      {required this.id, required this.displayName, this.email});
+      {required this.id,
+      required this.username,
+      required this.displayName,
+      @JsonKey(name: 'avatar_url') this.avatarUrl,
+      this.email});
 
   factory _$UserSummaryImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserSummaryImplFromJson(json);
@@ -441,13 +600,18 @@ class _$UserSummaryImpl implements _UserSummary {
   @override
   final String id;
   @override
+  final String username;
+  @override
   final String displayName;
+  @override
+  @JsonKey(name: 'avatar_url')
+  final String? avatarUrl;
   @override
   final String? email;
 
   @override
   String toString() {
-    return 'UserSummary(id: $id, displayName: $displayName, email: $email)';
+    return 'UserSummary(id: $id, username: $username, displayName: $displayName, avatarUrl: $avatarUrl, email: $email)';
   }
 
   @override
@@ -456,14 +620,19 @@ class _$UserSummaryImpl implements _UserSummary {
         (other.runtimeType == runtimeType &&
             other is _$UserSummaryImpl &&
             (identical(other.id, id) || other.id == id) &&
+            (identical(other.username, username) ||
+                other.username == username) &&
             (identical(other.displayName, displayName) ||
                 other.displayName == displayName) &&
+            (identical(other.avatarUrl, avatarUrl) ||
+                other.avatarUrl == avatarUrl) &&
             (identical(other.email, email) || other.email == email));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, displayName, email);
+  int get hashCode =>
+      Object.hash(runtimeType, id, username, displayName, avatarUrl, email);
 
   /// Create a copy of UserSummary
   /// with the given fields replaced by the non-null parameter values.
@@ -484,7 +653,9 @@ class _$UserSummaryImpl implements _UserSummary {
 abstract class _UserSummary implements UserSummary {
   const factory _UserSummary(
       {required final String id,
+      required final String username,
       required final String displayName,
+      @JsonKey(name: 'avatar_url') final String? avatarUrl,
       final String? email}) = _$UserSummaryImpl;
 
   factory _UserSummary.fromJson(Map<String, dynamic> json) =
@@ -493,7 +664,12 @@ abstract class _UserSummary implements UserSummary {
   @override
   String get id;
   @override
+  String get username;
+  @override
   String get displayName;
+  @override
+  @JsonKey(name: 'avatar_url')
+  String? get avatarUrl;
   @override
   String? get email;
 

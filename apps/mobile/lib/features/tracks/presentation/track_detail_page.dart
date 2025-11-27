@@ -5,11 +5,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import '../application/track_detail_controller.dart';
 import '../domain/track.dart';
-import '../../../core/audio/audio_player_controller.dart';
 import '../../../core/auth/auth_controller.dart';
+import '../../../core/analytics/analytics_service.dart';
 import 'story_detail_sheet.dart';
 import 'comments_detail_sheet.dart';
 import 'widgets/track_edit_dialog.dart';
+import 'widgets/player_controls.dart';
 
 class TrackDetailPage extends HookConsumerWidget {
   const TrackDetailPage({
@@ -24,7 +25,6 @@ class TrackDetailPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(trackDetailControllerProvider(trackId));
-    final audioState = ref.watch(audioPlayerControllerProvider);
     final selectedTab = useState(0); // 0: 曲, 1: ストーリー
     final authState = ref.watch(authControllerProvider);
     final currentUserId = authState.maybeWhen(
@@ -72,9 +72,6 @@ class TrackDetailPage extends HookConsumerWidget {
     // If we have detail, we show full info
     final detail = state.trackDetail;
     final track = displayTrack!;
-    final isPlaying =
-        audioState.currentTrack?.id == track.id && audioState.isPlaying;
-    final isCurrentTrack = audioState.currentTrack?.id == track.id;
     final hasStory = track.story != null;
     final isOwner = isAuthenticated && currentUserId == track.userId;
 
@@ -123,7 +120,19 @@ class TrackDetailPage extends HookConsumerWidget {
                       label: 'ストーリー',
                       isSelected: selectedTab.value == 1,
                       isEnabled: hasStory,
-                      onTap: hasStory ? () => selectedTab.value = 1 : null,
+                      onTap: hasStory
+                          ? () {
+                              selectedTab.value = 1;
+                              if (track.story != null) {
+                                ref
+                                    .read(analyticsServiceProvider)
+                                    .logStoryExpanded(
+                                      track.id,
+                                      track.story!['id'] as String,
+                                    );
+                              }
+                            }
+                          : null,
                     ),
                   ),
                 ],
@@ -139,9 +148,6 @@ class TrackDetailPage extends HookConsumerWidget {
                         ref,
                         track,
                         detail,
-                        audioState,
-                        isPlaying,
-                        isCurrentTrack,
                         isAuthenticated,
                       )
                     : _buildStoryTab(
@@ -203,9 +209,6 @@ class TrackDetailPage extends HookConsumerWidget {
     WidgetRef ref,
     Track track,
     dynamic detail,
-    dynamic audioState,
-    bool isPlaying,
-    bool isCurrentTrack,
     bool isAuthenticated,
   ) {
     return Column(
@@ -250,12 +253,20 @@ class TrackDetailPage extends HookConsumerWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
-              Text(
-                track.artistName,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.grey[400],
-                    ),
-                textAlign: TextAlign.center,
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => context.go('/users/${track.userId}'),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  child: Text(
+                    track.artistName,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ),
             ],
           ),
@@ -263,170 +274,13 @@ class TrackDetailPage extends HookConsumerWidget {
 
         const SizedBox(height: 32),
 
-        // シークバー
-        if (isCurrentTrack) ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                SliderTheme(
-                  data: SliderThemeData(
-                    trackHeight: 3,
-                    thumbShape: const RoundSliderThumbShape(
-                      enabledThumbRadius: 6,
-                    ),
-                    overlayShape: const RoundSliderOverlayShape(
-                      overlayRadius: 14,
-                    ),
-                  ),
-                  child: Slider(
-                    value: audioState.position.inSeconds.toDouble().clamp(
-                          0.0,
-                          audioState.duration.inSeconds.toDouble() > 0
-                              ? audioState.duration.inSeconds.toDouble()
-                              : 1.0,
-                        ),
-                    max: audioState.duration.inSeconds.toDouble() > 0
-                        ? audioState.duration.inSeconds.toDouble()
-                        : 1.0,
-                    onChanged: (value) {
-                      ref
-                          .read(audioPlayerControllerProvider.notifier)
-                          .seek(Duration(seconds: value.toInt()));
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _formatDuration(audioState.position),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[400],
-                        ),
-                      ),
-                      Text(
-                        audioState.duration.inSeconds > 0
-                            ? '-${_formatDuration(audioState.duration - audioState.position)}'
-                            : '0:00',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[400],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ] else ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                SliderTheme(
-                  data: SliderThemeData(
-                    trackHeight: 3,
-                    thumbShape: const RoundSliderThumbShape(
-                      enabledThumbRadius: 6,
-                    ),
-                  ),
-                  child: const Slider(
-                    value: 0,
-                    max: 1,
-                    onChanged: null,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '0:00',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[400],
-                        ),
-                      ),
-                      Text(
-                        '0:00',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[400],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        // シークバー (Extracted)
+        PlayerProgressControl(trackId: track.id),
 
         const SizedBox(height: 24),
 
-        // プレイヤーコントロール
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              iconSize: 32,
-              icon: const Icon(Icons.skip_previous),
-              onPressed: () {
-                // TODO: 前の曲へ
-              },
-            ),
-            const SizedBox(width: 24),
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                shape: BoxShape.circle,
-              ),
-              child: audioState.isLoading
-                  ? const Center(
-                      child: SizedBox(
-                        width: 32,
-                        height: 32,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 3,
-                        ),
-                      ),
-                    )
-                  : IconButton(
-                      iconSize: 32,
-                      icon: Icon(
-                        isPlaying ? Icons.pause : Icons.play_arrow,
-                        color: Colors.white,
-                      ),
-                      onPressed: () async {
-                        final controller =
-                            ref.read(audioPlayerControllerProvider.notifier);
-                        if (isCurrentTrack) {
-                          await controller.togglePlayPause();
-                        } else {
-                          await controller.playTrack(track);
-                        }
-                      },
-                    ),
-            ),
-            const SizedBox(width: 24),
-            IconButton(
-              iconSize: 32,
-              icon: const Icon(Icons.skip_next),
-              onPressed: () {
-                // TODO: 次の曲へ
-              },
-            ),
-          ],
-        ),
+        // プレイヤーコントロール (Extracted)
+        PlayerActionButtons(track: track),
 
         const SizedBox(height: 32),
 
@@ -716,12 +570,6 @@ class TrackDetailPage extends HookConsumerWidget {
         ],
       ),
     );
-  }
-
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds.remainder(60);
-    return '$minutes:${seconds.toString().padLeft(2, '0')}';
   }
 
   Future<void> _openStoryEditor(

@@ -6,6 +6,17 @@ from .comments import CommentSchema
 from .story import StorySchema
 
 
+class UserSummary(BaseModel):
+    """Minimal user info for embedding in tracks/stories."""
+    id: UUID
+    username: str
+    display_name: str
+    avatar_url: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
 class TrackSchema(BaseModel):
     id: UUID
     title: str
@@ -24,6 +35,7 @@ class TrackSchema(BaseModel):
     has_vocals: bool | None = None
     tags: list[str] = Field(default_factory=list)
     story: StorySchema | None = None
+    user: UserSummary | None = None  # Added: User information
 
 
 class TrackDetailResponse(BaseModel):

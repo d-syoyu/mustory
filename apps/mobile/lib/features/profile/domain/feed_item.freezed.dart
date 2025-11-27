@@ -21,7 +21,10 @@ FeedUser _$FeedUserFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$FeedUser {
   String get id => throw _privateConstructorUsedError;
+  String get username => throw _privateConstructorUsedError;
   String get displayName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'avatar_url')
+  String? get avatarUrl => throw _privateConstructorUsedError;
 
   /// Serializes this FeedUser to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -38,7 +41,11 @@ abstract class $FeedUserCopyWith<$Res> {
   factory $FeedUserCopyWith(FeedUser value, $Res Function(FeedUser) then) =
       _$FeedUserCopyWithImpl<$Res, FeedUser>;
   @useResult
-  $Res call({String id, String displayName});
+  $Res call(
+      {String id,
+      String username,
+      String displayName,
+      @JsonKey(name: 'avatar_url') String? avatarUrl});
 }
 
 /// @nodoc
@@ -57,17 +64,27 @@ class _$FeedUserCopyWithImpl<$Res, $Val extends FeedUser>
   @override
   $Res call({
     Object? id = null,
+    Object? username = null,
     Object? displayName = null,
+    Object? avatarUrl = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
+      username: null == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
+              as String,
       displayName: null == displayName
           ? _value.displayName
           : displayName // ignore: cast_nullable_to_non_nullable
               as String,
+      avatarUrl: freezed == avatarUrl
+          ? _value.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -80,7 +97,11 @@ abstract class _$$FeedUserImplCopyWith<$Res>
       __$$FeedUserImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String id, String displayName});
+  $Res call(
+      {String id,
+      String username,
+      String displayName,
+      @JsonKey(name: 'avatar_url') String? avatarUrl});
 }
 
 /// @nodoc
@@ -97,17 +118,27 @@ class __$$FeedUserImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
+    Object? username = null,
     Object? displayName = null,
+    Object? avatarUrl = freezed,
   }) {
     return _then(_$FeedUserImpl(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
+      username: null == username
+          ? _value.username
+          : username // ignore: cast_nullable_to_non_nullable
+              as String,
       displayName: null == displayName
           ? _value.displayName
           : displayName // ignore: cast_nullable_to_non_nullable
               as String,
+      avatarUrl: freezed == avatarUrl
+          ? _value.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -115,7 +146,11 @@ class __$$FeedUserImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$FeedUserImpl implements _FeedUser {
-  const _$FeedUserImpl({required this.id, required this.displayName});
+  const _$FeedUserImpl(
+      {required this.id,
+      required this.username,
+      required this.displayName,
+      @JsonKey(name: 'avatar_url') this.avatarUrl});
 
   factory _$FeedUserImpl.fromJson(Map<String, dynamic> json) =>
       _$$FeedUserImplFromJson(json);
@@ -123,11 +158,16 @@ class _$FeedUserImpl implements _FeedUser {
   @override
   final String id;
   @override
+  final String username;
+  @override
   final String displayName;
+  @override
+  @JsonKey(name: 'avatar_url')
+  final String? avatarUrl;
 
   @override
   String toString() {
-    return 'FeedUser(id: $id, displayName: $displayName)';
+    return 'FeedUser(id: $id, username: $username, displayName: $displayName, avatarUrl: $avatarUrl)';
   }
 
   @override
@@ -136,13 +176,18 @@ class _$FeedUserImpl implements _FeedUser {
         (other.runtimeType == runtimeType &&
             other is _$FeedUserImpl &&
             (identical(other.id, id) || other.id == id) &&
+            (identical(other.username, username) ||
+                other.username == username) &&
             (identical(other.displayName, displayName) ||
-                other.displayName == displayName));
+                other.displayName == displayName) &&
+            (identical(other.avatarUrl, avatarUrl) ||
+                other.avatarUrl == avatarUrl));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, displayName);
+  int get hashCode =>
+      Object.hash(runtimeType, id, username, displayName, avatarUrl);
 
   /// Create a copy of FeedUser
   /// with the given fields replaced by the non-null parameter values.
@@ -163,7 +208,9 @@ class _$FeedUserImpl implements _FeedUser {
 abstract class _FeedUser implements FeedUser {
   const factory _FeedUser(
       {required final String id,
-      required final String displayName}) = _$FeedUserImpl;
+      required final String username,
+      required final String displayName,
+      @JsonKey(name: 'avatar_url') final String? avatarUrl}) = _$FeedUserImpl;
 
   factory _FeedUser.fromJson(Map<String, dynamic> json) =
       _$FeedUserImpl.fromJson;
@@ -171,7 +218,12 @@ abstract class _FeedUser implements FeedUser {
   @override
   String get id;
   @override
+  String get username;
+  @override
   String get displayName;
+  @override
+  @JsonKey(name: 'avatar_url')
+  String? get avatarUrl;
 
   /// Create a copy of FeedUser
   /// with the given fields replaced by the non-null parameter values.
@@ -188,6 +240,7 @@ FeedItem _$FeedItemFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$FeedItem {
   String get type => throw _privateConstructorUsedError;
+  @JsonKey(name: 'created_at')
   DateTime get createdAt => throw _privateConstructorUsedError;
   FeedUser get user => throw _privateConstructorUsedError;
   Track? get track => throw _privateConstructorUsedError;
@@ -210,7 +263,7 @@ abstract class $FeedItemCopyWith<$Res> {
   @useResult
   $Res call(
       {String type,
-      DateTime createdAt,
+      @JsonKey(name: 'created_at') DateTime createdAt,
       FeedUser user,
       Track? track,
       Story? story});
@@ -314,7 +367,7 @@ abstract class _$$FeedItemImplCopyWith<$Res>
   @useResult
   $Res call(
       {String type,
-      DateTime createdAt,
+      @JsonKey(name: 'created_at') DateTime createdAt,
       FeedUser user,
       Track? track,
       Story? story});
@@ -376,7 +429,7 @@ class __$$FeedItemImplCopyWithImpl<$Res>
 class _$FeedItemImpl implements _FeedItem {
   const _$FeedItemImpl(
       {required this.type,
-      required this.createdAt,
+      @JsonKey(name: 'created_at') required this.createdAt,
       required this.user,
       this.track,
       this.story});
@@ -387,6 +440,7 @@ class _$FeedItemImpl implements _FeedItem {
   @override
   final String type;
   @override
+  @JsonKey(name: 'created_at')
   final DateTime createdAt;
   @override
   final FeedUser user;
@@ -437,7 +491,7 @@ class _$FeedItemImpl implements _FeedItem {
 abstract class _FeedItem implements FeedItem {
   const factory _FeedItem(
       {required final String type,
-      required final DateTime createdAt,
+      @JsonKey(name: 'created_at') required final DateTime createdAt,
       required final FeedUser user,
       final Track? track,
       final Story? story}) = _$FeedItemImpl;
@@ -448,6 +502,7 @@ abstract class _FeedItem implements FeedItem {
   @override
   String get type;
   @override
+  @JsonKey(name: 'created_at')
   DateTime get createdAt;
   @override
   FeedUser get user;

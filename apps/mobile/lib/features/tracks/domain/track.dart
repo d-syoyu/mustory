@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../profile/domain/user_profile.dart';
 
 part 'track.freezed.dart';
 
@@ -17,6 +18,7 @@ class Track with _$Track {
     @Default(0) int storyCommentCount,
     @Default(false) bool isLiked,
     Map<String, dynamic>? story,
+    UserSummary? user,  // Added: User information
   }) = _Track;
 
   const Track._();
@@ -40,6 +42,9 @@ class Track with _$Track {
             (json['story_comment_count'] as num?)?.toInt() ?? 0,
         isLiked: json['is_liked'] as bool? ?? false,
         story: json['story'] as Map<String, dynamic>?,
+        user: json['user'] != null
+            ? UserSummary.fromJson(json['user'] as Map<String, dynamic>)
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -55,5 +60,6 @@ class Track with _$Track {
         'track_comment_count': trackCommentCount,
         'story_comment_count': storyCommentCount,
         'story': story,
+        'user': user?.toJson(),
       };
 }

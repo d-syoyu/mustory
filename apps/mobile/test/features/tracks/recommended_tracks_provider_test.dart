@@ -10,7 +10,7 @@ void main() {
   group('recommendedTracksProvider', () {
     test('returns tracks from repository with expected limit', () async {
       final repository = _FakeTracksRepository([
-        Track(
+        const Track(
           id: 'track-1',
           title: 'Story Hero',
           artistName: 'Creator A',
@@ -20,7 +20,7 @@ void main() {
           likeCount: 10,
           viewCount: 100,
         ),
-        Track(
+        const Track(
           id: 'track-2',
           title: 'Indie Fresh',
           artistName: 'Creator B',

@@ -22,6 +22,7 @@ from ...schemas.tracks import (
     TrackUploadInitResponse,
     TrackUploadCompleteRequest,
     TrackProcessingStatusResponse,
+    UserSummary,
 )
 from ...services.queue import enqueue_track_processing
 from ...services.recommendations import RecommendationService
@@ -50,8 +51,9 @@ def search_tracks(
     search_pattern = f"%{q}%"
 
     # Search in title, artist_name, and tags
-    tracks = db.scalars(
-        select(models.Track)
+    results = db.execute(
+        select(models.Track, models.User)
+        .join(models.User, models.Track.user_id == models.User.id)
         .options(selectinload(models.Track.story))
         .where(
             (models.Track.title.ilike(search_pattern)) |
@@ -61,6 +63,9 @@ def search_tracks(
         .order_by(models.Track.created_at.desc())
         .limit(limit)
     ).all()
+
+    tracks_with_users = [(row[0], row[1]) for row in results]
+    tracks = [track for track, _ in tracks_with_users]
 
     # Batch query for user's likes to avoid N+1 problem
     liked_track_ids: set[UUID] = set()
@@ -91,9 +96,10 @@ def search_tracks(
         _map_track_with_like_status(
             track,
             _map_story_with_like_status(track.story, track.story.id in liked_story_ids if track.story else False),
-            track.id in liked_track_ids
+            track.id in liked_track_ids,
+            user
         )
-        for track in tracks
+        for track, user in tracks_with_users
     ]
 
 
@@ -111,13 +117,17 @@ def list_tracks(
     - **offset**: Number of tracks to skip (default 0)
     - Returns tracks ordered by newest first
     """
-    tracks = db.scalars(
-        select(models.Track)
+    results = db.execute(
+        select(models.Track, models.User)
+        .join(models.User, models.Track.user_id == models.User.id)
         .options(selectinload(models.Track.story))
         .order_by(models.Track.created_at.desc())
         .limit(limit)
         .offset(offset)
     ).all()
+
+    tracks_with_users = [(row[0], row[1]) for row in results]
+    tracks = [track for track, _ in tracks_with_users]
 
     # Batch query for user's likes to avoid N+1 problem
     liked_track_ids: set[UUID] = set()
@@ -148,9 +158,10 @@ def list_tracks(
         _map_track_with_like_status(
             track,
             _map_story_with_like_status(track.story, track.story.id in liked_story_ids if track.story else False),
-            track.id in liked_track_ids
+            track.id in liked_track_ids,
+            user
         )
-        for track in tracks
+        for track, user in tracks_with_users
     ]
 
 
@@ -180,16 +191,18 @@ def list_liked_tracks(
     if not liked_track_ids:
         return []
 
-    # Fetch tracks with their stories
-    tracks = db.scalars(
-        select(models.Track)
+    # Fetch tracks with their stories and user info
+    results = db.execute(
+        select(models.Track, models.User)
+        .join(models.User, models.Track.user_id == models.User.id)
         .options(selectinload(models.Track.story))
         .where(models.Track.id.in_(liked_track_ids))
     ).all()
 
     # Preserve the order from liked_track_ids
-    track_dict = {track.id: track for track in tracks}
-    ordered_tracks = [track_dict[track_id] for track_id in liked_track_ids if track_id in track_dict]
+    track_user_dict = {row[0].id: (row[0], row[1]) for row in results}
+    ordered_tracks_with_users = [track_user_dict[track_id] for track_id in liked_track_ids if track_id in track_user_dict]
+    ordered_tracks = [track for track, _ in ordered_tracks_with_users]
 
     # All tracks in this endpoint are liked by the current user
     # Batch query for story likes
@@ -208,9 +221,10 @@ def list_liked_tracks(
         _map_track_with_like_status(
             track,
             _map_story_with_like_status(track.story, track.story.id in liked_story_ids if track.story else False),
-            True
+            True,
+            user
         )
-        for track in ordered_tracks
+        for track, user in ordered_tracks_with_users
     ]
 
 
@@ -260,6 +274,13 @@ def get_recommended_tracks(
     if not recommended_tracks:
         return []
 
+    # Batch fetch user info for all tracks
+    track_user_ids = [track.user_id for track in recommended_tracks]
+    users = db.scalars(
+        select(models.User).where(models.User.id.in_(track_user_ids))
+    ).all()
+    user_dict = {user.id: user for user in users}
+
     liked_track_ids: set[UUID] = set()
     if current_user:
         track_ids = [track.id for track in recommended_tracks]
@@ -291,6 +312,7 @@ def get_recommended_tracks(
             track,
             _map_story_with_like_status(track.story, track.story.id in liked_story_ids if track.story else False),
             track.id in liked_track_ids,
+            user_dict.get(track.user_id)
         )
         for track in recommended_tracks
     ]
@@ -310,14 +332,18 @@ def list_my_tracks(
     - **offset**: Number of tracks to skip (default 0)
     - Returns user's tracks ordered by newest first
     """
-    tracks = db.scalars(
-        select(models.Track)
+    results = db.execute(
+        select(models.Track, models.User)
+        .join(models.User, models.Track.user_id == models.User.id)
         .options(selectinload(models.Track.story))
         .where(models.Track.user_id == current_user.id)
         .order_by(models.Track.created_at.desc())
         .limit(limit)
         .offset(offset)
     ).all()
+
+    tracks_with_users = [(row[0], row[1]) for row in results]
+    tracks = [track for track, _ in tracks_with_users]
 
     # Check which tracks the user has liked
     liked_track_ids: set[UUID] = set()
@@ -347,9 +373,10 @@ def list_my_tracks(
         _map_track_with_like_status(
             track,
             _map_story_with_like_status(track.story, track.story.id in liked_story_ids if track.story else False),
-            track.id in liked_track_ids
+            track.id in liked_track_ids,
+            user
         )
-        for track in tracks
+        for track, user in tracks_with_users
     ]
 
 
@@ -635,8 +662,18 @@ def _map_track_with_like_status(
     track: models.Track,
     story_schema: StorySchema | None,
     is_liked: bool,
+    user: models.User | None = None,
 ) -> TrackSchema:
     """Map track to schema with pre-computed like status (optimized version)."""
+    user_summary = None
+    if user:
+        user_summary = UserSummary(
+            id=user.id,
+            username=user.username,
+            display_name=user.display_name,
+            avatar_url=user.avatar_url,
+        )
+
     return TrackSchema(
         id=track.id,
         title=track.title,
@@ -655,6 +692,7 @@ def _map_track_with_like_status(
         has_vocals=track.has_vocals,
         tags=track.tags or [],
         story=story_schema,
+        user=user_summary,
     )
 
 
@@ -676,6 +714,17 @@ def _map_track(
         )
         is_liked = existing_like is not None
 
+    # Fetch user info
+    user = db.get(models.User, track.user_id)
+    user_summary = None
+    if user:
+        user_summary = UserSummary(
+            id=user.id,
+            username=user.username,
+            display_name=user.display_name,
+            avatar_url=user.avatar_url,
+        )
+
     return TrackSchema(
         id=track.id,
         title=track.title,
@@ -694,6 +743,7 @@ def _map_track(
         has_vocals=track.has_vocals,
         tags=track.tags or [],
         story=story_schema,
+        user=user_summary,
     )
 
 

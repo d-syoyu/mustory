@@ -1,7 +1,6 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mustory_mobile/core/network/api_client.dart';
 import 'package:mustory_mobile/features/tracks/data/tracks_repository.dart';
-import 'package:mustory_mobile/features/tracks/domain/track.dart';
 import 'package:mustory_mobile/features/tracks/application/tracks_state.dart';
 
 // Repository Provider

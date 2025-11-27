@@ -1,8 +1,8 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mustory_mobile/core/network/api_client.dart';
 import 'package:mustory_mobile/features/profile/data/profile_repository.dart';
-import 'package:mustory_mobile/features/profile/domain/user_profile.dart';
 import 'package:mustory_mobile/features/profile/domain/feed_item.dart';
+import 'package:mustory_mobile/features/profile/domain/user_profile.dart';
 
 // Repository Provider
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
@@ -15,22 +15,26 @@ class ProfileState {
   final UserProfile? profile;
   final bool isLoading;
   final String? error;
+  final bool isSaving;
 
   ProfileState({
     this.profile,
     this.isLoading = false,
     this.error,
+    this.isSaving = false,
   });
 
   ProfileState copyWith({
     UserProfile? profile,
     bool? isLoading,
     String? error,
+    bool? isSaving,
   }) {
     return ProfileState(
       profile: profile ?? this.profile,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
+      isSaving: isSaving ?? this.isSaving,
     );
   }
 }
@@ -39,8 +43,10 @@ class ProfileState {
 class ProfileController extends StateNotifier<ProfileState> {
   final ProfileRepository _repository;
   final String userId;
+  final Ref _ref;
 
-  ProfileController(this._repository, this.userId) : super(ProfileState()) {
+  ProfileController(this._repository, this.userId, this._ref)
+      : super(ProfileState()) {
     loadProfile();
   }
 
@@ -53,7 +59,7 @@ class ProfileController extends StateNotifier<ProfileState> {
     } catch (e) {
       state = ProfileState(
         isLoading: false,
-        error: 'プロフィールの読み込みに失敗しました: $e',
+        error: 'プロフィールの取得に失敗しました: $e',
       );
     }
   }
@@ -81,29 +87,63 @@ class ProfileController extends StateNotifier<ProfileState> {
 
       // Update with actual follower count from server
       final followerCount = response['follower_count'] as int? ??
-          (wasFollowing ? currentProfile.followerCount - 1 : currentProfile.followerCount + 1);
+          (wasFollowing
+              ? currentProfile.followerCount - 1
+              : currentProfile.followerCount + 1);
 
       state = state.copyWith(
         profile: state.profile?.copyWith(
           followerCount: followerCount,
         ),
       );
+
+      // Refresh dependent data
+      _ref.invalidate(followingFeedControllerProvider);
+      _ref.invalidate(followersControllerProvider(userId));
+      _ref.invalidate(followingControllerProvider(userId));
     } catch (e) {
       // Revert optimistic update on error
       state = state.copyWith(
         profile: currentProfile,
-        error: 'フォロー操作に失敗しました: $e',
+        error: 'フォロー処理に失敗しました: $e',
+      );
+    }
+  }
+
+  Future<void> updateProfile({
+    String? displayName,
+    String? username,
+    String? bio,
+    String? location,
+    String? linkUrl,
+    String? avatarUrl,
+  }) async {
+    state = state.copyWith(isSaving: true, error: null);
+    try {
+      final updated = await _repository.updateProfile(
+        displayName: displayName,
+        username: username,
+        bio: bio,
+        location: location,
+        linkUrl: linkUrl,
+        avatarUrl: avatarUrl,
+      );
+      state = ProfileState(profile: updated, isSaving: false);
+    } catch (e) {
+      state = state.copyWith(
+        isSaving: false,
+        error: 'プロフィールの更新に失敗しました: $e',
       );
     }
   }
 }
 
 // Profile Provider Factory
-final profileControllerProvider = StateNotifierProvider.family<
-    ProfileController, ProfileState, String>(
+final profileControllerProvider =
+    StateNotifierProvider.family<ProfileController, ProfileState, String>(
   (ref, userId) {
     final repository = ref.watch(profileRepositoryProvider);
-    return ProfileController(repository, userId);
+    return ProfileController(repository, userId, ref);
   },
 );
 
@@ -113,12 +153,14 @@ class FollowersState {
   final bool isLoading;
   final String? error;
   final bool hasMore;
+  final String? nextCursor;
 
   FollowersState({
     this.users = const [],
     this.isLoading = false,
     this.error,
     this.hasMore = true,
+    this.nextCursor,
   });
 
   FollowersState copyWith({
@@ -126,12 +168,14 @@ class FollowersState {
     bool? isLoading,
     String? error,
     bool? hasMore,
+    String? nextCursor,
   }) {
     return FollowersState(
       users: users ?? this.users,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       hasMore: hasMore ?? this.hasMore,
+      nextCursor: nextCursor ?? this.nextCursor,
     );
   }
 }
@@ -148,6 +192,7 @@ class FollowersController extends StateNotifier<FollowersState> {
 
   Future<void> loadFollowers({bool refresh = false}) async {
     if (state.isLoading) return;
+    if (!refresh && !state.hasMore) return;
 
     if (refresh) {
       state = FollowersState(isLoading: true);
@@ -156,37 +201,32 @@ class FollowersController extends StateNotifier<FollowersState> {
     }
 
     try {
-      final offset = refresh ? 0 : state.users.length;
-      final newUsers = await _repository.getFollowers(
+      final cursor = refresh ? null : state.nextCursor;
+      final page = await _repository.getFollowers(
         userId,
         limit: _pageSize,
-        offset: offset,
+        cursor: cursor,
       );
 
-      if (refresh) {
-        state = FollowersState(
-          users: newUsers,
-          isLoading: false,
-          hasMore: newUsers.length >= _pageSize,
-        );
-      } else {
-        state = state.copyWith(
-          users: [...state.users, ...newUsers],
-          isLoading: false,
-          hasMore: newUsers.length >= _pageSize,
-        );
-      }
+      final combinedUsers =
+          refresh ? page.items : [...state.users, ...page.items];
+      state = state.copyWith(
+        users: combinedUsers,
+        isLoading: false,
+        hasMore: page.nextCursor != null,
+        nextCursor: page.nextCursor,
+      );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: 'フォロワーの読み込みに失敗しました: $e',
+        error: 'フォロワーの取得に失敗しました: $e',
       );
     }
   }
 }
 
-final followersControllerProvider = StateNotifierProvider.family<
-    FollowersController, FollowersState, String>(
+final followersControllerProvider =
+    StateNotifierProvider.family<FollowersController, FollowersState, String>(
   (ref, userId) {
     final repository = ref.watch(profileRepositoryProvider);
     return FollowersController(repository, userId);
@@ -205,6 +245,7 @@ class FollowingController extends StateNotifier<FollowersState> {
 
   Future<void> loadFollowing({bool refresh = false}) async {
     if (state.isLoading) return;
+    if (!refresh && !state.hasMore) return;
 
     if (refresh) {
       state = FollowersState(isLoading: true);
@@ -213,37 +254,32 @@ class FollowingController extends StateNotifier<FollowersState> {
     }
 
     try {
-      final offset = refresh ? 0 : state.users.length;
-      final newUsers = await _repository.getFollowing(
+      final cursor = refresh ? null : state.nextCursor;
+      final page = await _repository.getFollowing(
         userId,
         limit: _pageSize,
-        offset: offset,
+        cursor: cursor,
       );
 
-      if (refresh) {
-        state = FollowersState(
-          users: newUsers,
-          isLoading: false,
-          hasMore: newUsers.length >= _pageSize,
-        );
-      } else {
-        state = state.copyWith(
-          users: [...state.users, ...newUsers],
-          isLoading: false,
-          hasMore: newUsers.length >= _pageSize,
-        );
-      }
+      final combinedUsers =
+          refresh ? page.items : [...state.users, ...page.items];
+      state = state.copyWith(
+        users: combinedUsers,
+        isLoading: false,
+        hasMore: page.nextCursor != null,
+        nextCursor: page.nextCursor,
+      );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: 'フォロー中の読み込みに失敗しました: $e',
+        error: 'フォロー中ユーザーの取得に失敗しました: $e',
       );
     }
   }
 }
 
-final followingControllerProvider = StateNotifierProvider.family<
-    FollowingController, FollowersState, String>(
+final followingControllerProvider =
+    StateNotifierProvider.family<FollowingController, FollowersState, String>(
   (ref, userId) {
     final repository = ref.watch(profileRepositoryProvider);
     return FollowingController(repository, userId);
@@ -256,12 +292,14 @@ class FollowingFeedState {
   final bool isLoading;
   final String? error;
   final bool hasMore;
+  final String? nextCursor;
 
   FollowingFeedState({
     this.items = const [],
     this.isLoading = false,
     this.error,
     this.hasMore = true,
+    this.nextCursor,
   });
 
   FollowingFeedState copyWith({
@@ -269,12 +307,14 @@ class FollowingFeedState {
     bool? isLoading,
     String? error,
     bool? hasMore,
+    String? nextCursor,
   }) {
     return FollowingFeedState(
       items: items ?? this.items,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       hasMore: hasMore ?? this.hasMore,
+      nextCursor: nextCursor ?? this.nextCursor,
     );
   }
 }
@@ -290,6 +330,7 @@ class FollowingFeedController extends StateNotifier<FollowingFeedState> {
 
   Future<void> loadFeed({bool refresh = false}) async {
     if (state.isLoading) return;
+    if (!refresh && !state.hasMore) return;
 
     if (refresh) {
       state = FollowingFeedState(isLoading: true);
@@ -298,36 +339,31 @@ class FollowingFeedController extends StateNotifier<FollowingFeedState> {
     }
 
     try {
-      final offset = refresh ? 0 : state.items.length;
-      final newItems = await _repository.getFollowingFeed(
+      final cursor = refresh ? null : state.nextCursor;
+      final page = await _repository.getFollowingFeed(
         limit: _pageSize,
-        offset: offset,
+        cursor: cursor,
       );
 
-      if (refresh) {
-        state = FollowingFeedState(
-          items: newItems,
-          isLoading: false,
-          hasMore: newItems.length >= _pageSize,
-        );
-      } else {
-        state = state.copyWith(
-          items: [...state.items, ...newItems],
-          isLoading: false,
-          hasMore: newItems.length >= _pageSize,
-        );
-      }
+      final combinedItems =
+          refresh ? page.items : [...state.items, ...page.items];
+      state = state.copyWith(
+        items: combinedItems,
+        isLoading: false,
+        hasMore: page.nextCursor != null,
+        nextCursor: page.nextCursor,
+      );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: 'フィードの読み込みに失敗しました: $e',
+        error: 'フィードの取得に失敗しました: $e',
       );
     }
   }
 }
 
-final followingFeedControllerProvider = StateNotifierProvider<
-    FollowingFeedController, FollowingFeedState>(
+final followingFeedControllerProvider =
+    StateNotifierProvider<FollowingFeedController, FollowingFeedState>(
   (ref) {
     final repository = ref.watch(profileRepositoryProvider);
     return FollowingFeedController(repository);

@@ -3,6 +3,7 @@ import 'package:mustory_mobile/features/tracks/data/tracks_repository.dart';
 import 'package:mustory_mobile/features/tracks/domain/track_detail.dart';
 import 'package:mustory_mobile/features/tracks/application/tracks_controller.dart';
 import 'package:mustory_mobile/features/tracks/domain/comment.dart';
+import '../../../../core/analytics/analytics_service.dart';
 
 // Track Detail State
 class TrackDetailState {
@@ -32,9 +33,10 @@ class TrackDetailState {
 // Track Detail Controller
 class TrackDetailController extends StateNotifier<TrackDetailState> {
   final TracksRepository _repository;
+  final AnalyticsService _analyticsService;
   final String trackId;
 
-  TrackDetailController(this._repository, this.trackId)
+  TrackDetailController(this._repository, this._analyticsService, this.trackId)
       : super(TrackDetailState(isLoading: true)) {
     loadTrackDetail();
   }
@@ -187,10 +189,17 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
     if (currentDetail == null) return;
 
     try {
-      await _repository.createTrackComment(
+      final comment = await _repository.createTrackComment(
         trackId,
         body,
         parentCommentId: parentCommentId,
+      );
+
+      // Log analytics
+      await _analyticsService.logCommentPosted(
+        targetType: 'track',
+        targetId: trackId,
+        commentId: comment.id,
       );
 
       // Refresh to get updated comments with proper reply counts
@@ -209,10 +218,17 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
     if (currentDetail == null) return;
 
     try {
-      await _repository.createStoryComment(
+      final comment = await _repository.createStoryComment(
         storyId,
         body,
         parentCommentId: parentCommentId,
+      );
+
+      // Log analytics
+      await _analyticsService.logCommentPosted(
+        targetType: 'story',
+        targetId: storyId,
+        commentId: comment.id,
       );
 
       // Refresh to get updated comments with proper reply counts
@@ -265,7 +281,7 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
         await _repository.unlikeComment(commentId);
       }
 
-      List<Comment> _update(
+      List<Comment> updateComments(
         List<Comment> comments,
       ) {
         return comments
@@ -286,9 +302,9 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
         trackDetail: currentDetail.copyWith(
           trackComments: isStoryComment
               ? currentDetail.trackComments
-              : _update(currentDetail.trackComments),
+              : updateComments(currentDetail.trackComments),
           storyComments: isStoryComment
-              ? _update(currentDetail.storyComments)
+              ? updateComments(currentDetail.storyComments)
               : currentDetail.storyComments,
         ),
       );
@@ -303,5 +319,6 @@ class TrackDetailController extends StateNotifier<TrackDetailState> {
 final trackDetailControllerProvider = StateNotifierProvider.family<
     TrackDetailController, TrackDetailState, String>((ref, trackId) {
   final repository = ref.watch(tracksRepositoryProvider);
-  return TrackDetailController(repository, trackId);
+  final analyticsService = ref.watch(analyticsServiceProvider);
+  return TrackDetailController(repository, analyticsService, trackId);
 });

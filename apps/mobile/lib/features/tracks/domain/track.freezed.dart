@@ -28,6 +28,7 @@ mixin _$Track {
   int get storyCommentCount => throw _privateConstructorUsedError;
   bool get isLiked => throw _privateConstructorUsedError;
   Map<String, dynamic>? get story => throw _privateConstructorUsedError;
+  UserSummary? get user => throw _privateConstructorUsedError;
 
   /// Create a copy of Track
   /// with the given fields replaced by the non-null parameter values.
@@ -52,7 +53,10 @@ abstract class $TrackCopyWith<$Res> {
       int trackCommentCount,
       int storyCommentCount,
       bool isLiked,
-      Map<String, dynamic>? story});
+      Map<String, dynamic>? story,
+      UserSummary? user});
+
+  $UserSummaryCopyWith<$Res>? get user;
 }
 
 /// @nodoc
@@ -82,6 +86,7 @@ class _$TrackCopyWithImpl<$Res, $Val extends Track>
     Object? storyCommentCount = null,
     Object? isLiked = null,
     Object? story = freezed,
+    Object? user = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -132,7 +137,25 @@ class _$TrackCopyWithImpl<$Res, $Val extends Track>
           ? _value.story
           : story // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
+      user: freezed == user
+          ? _value.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as UserSummary?,
     ) as $Val);
+  }
+
+  /// Create a copy of Track
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $UserSummaryCopyWith<$Res>? get user {
+    if (_value.user == null) {
+      return null;
+    }
+
+    return $UserSummaryCopyWith<$Res>(_value.user!, (value) {
+      return _then(_value.copyWith(user: value) as $Val);
+    });
   }
 }
 
@@ -155,7 +178,11 @@ abstract class _$$TrackImplCopyWith<$Res> implements $TrackCopyWith<$Res> {
       int trackCommentCount,
       int storyCommentCount,
       bool isLiked,
-      Map<String, dynamic>? story});
+      Map<String, dynamic>? story,
+      UserSummary? user});
+
+  @override
+  $UserSummaryCopyWith<$Res>? get user;
 }
 
 /// @nodoc
@@ -183,6 +210,7 @@ class __$$TrackImplCopyWithImpl<$Res>
     Object? storyCommentCount = null,
     Object? isLiked = null,
     Object? story = freezed,
+    Object? user = freezed,
   }) {
     return _then(_$TrackImpl(
       id: null == id
@@ -233,6 +261,10 @@ class __$$TrackImplCopyWithImpl<$Res>
           ? _value._story
           : story // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
+      user: freezed == user
+          ? _value.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as UserSummary?,
     ));
   }
 }
@@ -252,7 +284,8 @@ class _$TrackImpl extends _Track {
       this.trackCommentCount = 0,
       this.storyCommentCount = 0,
       this.isLiked = false,
-      final Map<String, dynamic>? story})
+      final Map<String, dynamic>? story,
+      this.user})
       : _story = story,
         super._();
 
@@ -294,8 +327,11 @@ class _$TrackImpl extends _Track {
   }
 
   @override
+  final UserSummary? user;
+
+  @override
   String toString() {
-    return 'Track(id: $id, title: $title, artistName: $artistName, userId: $userId, artworkUrl: $artworkUrl, hlsUrl: $hlsUrl, likeCount: $likeCount, viewCount: $viewCount, trackCommentCount: $trackCommentCount, storyCommentCount: $storyCommentCount, isLiked: $isLiked, story: $story)';
+    return 'Track(id: $id, title: $title, artistName: $artistName, userId: $userId, artworkUrl: $artworkUrl, hlsUrl: $hlsUrl, likeCount: $likeCount, viewCount: $viewCount, trackCommentCount: $trackCommentCount, storyCommentCount: $storyCommentCount, isLiked: $isLiked, story: $story, user: $user)';
   }
 
   @override
@@ -320,7 +356,8 @@ class _$TrackImpl extends _Track {
             (identical(other.storyCommentCount, storyCommentCount) ||
                 other.storyCommentCount == storyCommentCount) &&
             (identical(other.isLiked, isLiked) || other.isLiked == isLiked) &&
-            const DeepCollectionEquality().equals(other._story, _story));
+            const DeepCollectionEquality().equals(other._story, _story) &&
+            (identical(other.user, user) || other.user == user));
   }
 
   @override
@@ -337,7 +374,8 @@ class _$TrackImpl extends _Track {
       trackCommentCount,
       storyCommentCount,
       isLiked,
-      const DeepCollectionEquality().hash(_story));
+      const DeepCollectionEquality().hash(_story),
+      user);
 
   /// Create a copy of Track
   /// with the given fields replaced by the non-null parameter values.
@@ -361,7 +399,8 @@ abstract class _Track extends Track {
       final int trackCommentCount,
       final int storyCommentCount,
       final bool isLiked,
-      final Map<String, dynamic>? story}) = _$TrackImpl;
+      final Map<String, dynamic>? story,
+      final UserSummary? user}) = _$TrackImpl;
   const _Track._() : super._();
 
   @override
@@ -388,6 +427,8 @@ abstract class _Track extends Track {
   bool get isLiked;
   @override
   Map<String, dynamic>? get story;
+  @override
+  UserSummary? get user;
 
   /// Create a copy of Track
   /// with the given fields replaced by the non-null parameter values.

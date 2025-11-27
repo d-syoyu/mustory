@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mustory_mobile/features/tracks/domain/track.dart';
-import '../../../../core/audio/audio_player_controller.dart';
+import '../../../../core/audio/is_track_playing_provider.dart';
 
 /// Horizontal track card for carousel display
 class HorizontalTrackCard extends ConsumerWidget {
@@ -17,9 +18,8 @@ class HorizontalTrackCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final audioState = ref.watch(audioPlayerControllerProvider);
-    final isCurrentTrack = audioState.currentTrack?.id == track.id;
-    final isPlaying = isCurrentTrack && audioState.isPlaying;
+    // Only watch if THIS specific track is playing, not the entire audio state
+    final isPlaying = ref.watch(isTrackPlayingProvider(track.id));
     final theme = Theme.of(context);
 
     return Container(
@@ -183,6 +183,46 @@ class HorizontalTrackCard extends ConsumerWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
+
+            // User Info (if available)
+            if (track.user != null) ...[
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: () {
+                  context.push('/users/${track.user!.id}');
+                },
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 8,
+                      backgroundImage: track.user!.avatarUrl != null
+                          ? NetworkImage(track.user!.avatarUrl!)
+                          : null,
+                      child: track.user!.avatarUrl == null
+                          ? Icon(
+                              Icons.person,
+                              size: 8,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        '@${track.user!.username}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),

@@ -28,6 +28,11 @@ class MustoryApp extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
 
+    useEffect(() {
+      ref.read(analyticsServiceProvider).logAppStarted();
+      return null;
+    }, []);
+
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       routerConfig: router,

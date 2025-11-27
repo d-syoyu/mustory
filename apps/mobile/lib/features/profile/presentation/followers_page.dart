@@ -31,7 +31,8 @@ class FollowersPage extends HookConsumerWidget {
                       ElevatedButton(
                         onPressed: () {
                           ref
-                              .read(followersControllerProvider(userId).notifier)
+                              .read(
+                                  followersControllerProvider(userId).notifier)
                               .loadFollowers(refresh: true);
                         },
                         child: const Text('再読み込み'),
@@ -41,7 +42,7 @@ class FollowersPage extends HookConsumerWidget {
                 )
               : followersState.users.isEmpty
                   ? const Center(
-                      child: Text('フォロワーがいません'),
+                      child: Text('フォロワーがまだいません'),
                     )
                   : RefreshIndicator(
                       onRefresh: () async {
@@ -54,7 +55,6 @@ class FollowersPage extends HookConsumerWidget {
                             (followersState.hasMore ? 1 : 0),
                         itemBuilder: (context, index) {
                           if (index >= followersState.users.length) {
-                            // Load more indicator
                             if (!followersState.isLoading) {
                               Future.microtask(() {
                                 ref
@@ -74,13 +74,19 @@ class FollowersPage extends HookConsumerWidget {
                           final user = followersState.users[index];
                           return ListTile(
                             leading: CircleAvatar(
-                              child: Text(
-                                user.displayName.substring(0, 1).toUpperCase(),
-                              ),
+                              backgroundImage: user.avatarUrl != null
+                                  ? NetworkImage(user.avatarUrl!)
+                                  : null,
+                              child: user.avatarUrl == null
+                                  ? Text(
+                                      user.displayName.isNotEmpty
+                                          ? user.displayName[0].toUpperCase()
+                                          : '?',
+                                    )
+                                  : null,
                             ),
                             title: Text(user.displayName),
-                            subtitle:
-                                user.email != null ? Text(user.email!) : null,
+                            subtitle: Text('@${user.username}'),
                             onTap: () {
                               context.push('/users/${user.id}');
                             },

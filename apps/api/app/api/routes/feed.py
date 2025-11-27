@@ -5,10 +5,9 @@ Feed API routes for follow-based content discovery.
 from datetime import datetime
 from typing import Literal
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import select, union_all
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.db.models import Follow, Story, Track, User
 from app.dependencies.database import DbSession
@@ -19,7 +18,9 @@ router = APIRouter(prefix="/feed", tags=["feed"])
 
 class UserInfo(BaseModel):
     id: str
+    username: str
     display_name: str
+    avatar_url: str | None = None
 
     class Config:
         from_attributes = True
@@ -60,45 +61,61 @@ class FeedItem(BaseModel):
         from_attributes = True
 
 
-@router.get("/following", response_model=list[FeedItem])
+class FollowFeedResponse(BaseModel):
+    items: list[FeedItem]
+    next_cursor: str | None = None
+
+
+@router.get("/following", response_model=FollowFeedResponse)
 async def get_following_feed(
     current_user: CurrentUser,
     db: DbSession,
-    limit: int = 50,
-    offset: int = 0,
-) -> list[FeedItem]:
+    limit: int = Query(50, le=100),
+    cursor: str | None = Query(None),
+) -> FollowFeedResponse:
     """
     Get feed of tracks and stories from users the current user follows.
     Returns items sorted by creation time (newest first).
     """
+    cursor_dt: datetime | None = None
+    if cursor:
+        try:
+            cursor_dt = datetime.fromisoformat(cursor)
+        except ValueError:
+            raise HTTPException(
+                status_code=400, detail="Invalid cursor format, use ISO 8601 datetime"
+            )
+
     # Get list of followed user IDs
-    followed_users_result = await db.execute(
-        select(Follow.followee_id).where(Follow.follower_id == current_user)
+    followed_users_result = db.execute(
+        select(Follow.followee_id).where(Follow.follower_id == current_user.id)
     )
     followed_user_ids = [row[0] for row in followed_users_result.all()]
 
     if not followed_user_ids:
-        return []
+        return FollowFeedResponse(items=[], next_cursor=None)
 
     # Get tracks from followed users
-    tracks_result = await db.execute(
+    track_query = (
         select(Track, User)
         .join(User, Track.user_id == User.id)
         .where(Track.user_id.in_(followed_user_ids))
-        .order_by(Track.created_at.desc())
-        .limit(limit)
     )
+    if cursor_dt:
+        track_query = track_query.where(Track.created_at < cursor_dt)
+    tracks_result = db.execute(track_query.order_by(Track.created_at.desc()).limit(limit + 1))
     tracks = tracks_result.all()
 
     # Get stories from followed users
-    stories_result = await db.execute(
+    story_query = (
         select(Story, User, Track)
         .join(User, Story.author_user_id == User.id)
         .join(Track, Story.track_id == Track.id)
         .where(Story.author_user_id.in_(followed_user_ids))
-        .order_by(Story.created_at.desc())
-        .limit(limit)
     )
+    if cursor_dt:
+        story_query = story_query.where(Story.created_at < cursor_dt)
+    stories_result = db.execute(story_query.order_by(Story.created_at.desc()).limit(limit + 1))
     stories = stories_result.all()
 
     # Combine and sort by created_at
@@ -109,7 +126,12 @@ async def get_following_feed(
             FeedItem(
                 type="track",
                 created_at=track.created_at,
-                user=UserInfo(id=str(user.id), display_name=user.display_name),
+                user=UserInfo(
+                    id=str(user.id),
+                    username=user.username,
+                    display_name=user.display_name,
+                    avatar_url=user.avatar_url,
+                ),
                 track=TrackInfo(
                     id=str(track.id),
                     title=track.title,
@@ -127,7 +149,12 @@ async def get_following_feed(
             FeedItem(
                 type="story",
                 created_at=story.created_at,
-                user=UserInfo(id=str(user.id), display_name=user.display_name),
+                user=UserInfo(
+                    id=str(user.id),
+                    username=user.username,
+                    display_name=user.display_name,
+                    avatar_url=user.avatar_url,
+                ),
                 story=StoryInfo(
                     id=str(story.id),
                     track_id=str(story.track_id),
@@ -141,5 +168,8 @@ async def get_following_feed(
     # Sort by created_at descending
     feed_items.sort(key=lambda x: x.created_at, reverse=True)
 
-    # Apply offset and limit to the combined results
-    return feed_items[offset : offset + limit]
+    has_more = len(feed_items) > limit
+    items = feed_items[:limit]
+    next_cursor = items[-1].created_at.isoformat() if has_more else None
+
+    return FollowFeedResponse(items=items, next_cursor=next_cursor)

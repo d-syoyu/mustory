@@ -187,12 +187,12 @@ class MiniPlayer extends ConsumerWidget {
                     ),
                     child: IconButton(
                       icon: audioState.isLoading
-                          ? SizedBox(
+                          ? const SizedBox(
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                valueColor: AlwaysStoppedAnimation<Color>(
                                   Colors.white,
                                 ),
                               ),
