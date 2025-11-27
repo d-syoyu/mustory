@@ -1,0 +1,18 @@
+00:00 +0: loading C:/Users/dsyoy/mustory/apps/mobile/test/features/tracks/track_detail_page_test.dart
+00:00 +0 -1: loading C:/Users/dsyoy/mustory/apps/mobile/test/features/tracks/track_detail_page_test.dart [E]
+  Failed to load "C:/Users/dsyoy/mustory/apps/mobile/test/features/tracks/track_detail_page_test.dart":
+  Compilation failed for testPath=C:/Users/dsyoy/mustory/apps/mobile/test/features/tracks/track_detail_page_test.dart: lib/core/audio/audio_player_controller.dart:10:8: Error: Error when reading 'lib/analytics/analytics_service.dart': 指定されたパスが見つかりません。
+  
+  import '../../analytics/analytics_service.dart';
+         ^
+  lib/core/audio/audio_player_controller.dart:37:9: Error: Type 'AnalyticsService' not found.
+    final AnalyticsService _analyticsService;
+          ^^^^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:164:38: Error: Undefined name 'analyticsServiceProvider'.
+    final analyticsService = ref.watch(analyticsServiceProvider);
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:37:9: Error: 'AnalyticsService' isn't a type.
+    final AnalyticsService _analyticsService;
+          ^^^^^^^^^^^^^^^^
+  .
+00:00 +0 -1: Some tests failed.

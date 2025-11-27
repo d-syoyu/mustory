@@ -1,0 +1,17 @@
+00:00 +0: loading C:/Users/dsyoy/mustory/apps/mobile/test/features/tracks/track_detail_page_test.dart
+00:00 +0 -1: loading C:/Users/dsyoy/mustory/apps/mobile/test/features/tracks/track_detail_page_test.dart [E]
+  Failed to load "C:/Users/dsyoy/mustory/apps/mobile/test/features/tracks/track_detail_page_test.dart":
+  Compilation failed for testPath=C:/Users/dsyoy/mustory/apps/mobile/test/features/tracks/track_detail_page_test.dart: test/features/tracks/track_detail_page_test.dart:122:7: Error: The non-abstract class '_FakeAuthRepository' is missing implementations for these members:
+   - AuthRepository.accessToken
+  Try to either
+   - provide an implementation,
+   - inherit an implementation from a superclass or mixin,
+   - mark the class as abstract, or
+   - provide a 'noSuchMethod' implementation.
+  class _FakeAuthRepository implements AuthRepository {
+        ^^^^^^^^^^^^^^^^^^^
+  lib/core/auth/auth_repository.dart:55:15: Context: 'AuthRepository.accessToken' is defined here.
+    String? get accessToken => _supabase.auth.currentSession?.accessToken;
+                ^^^^^^^^^^^
+  .
+00:00 +0 -1: Some tests failed.

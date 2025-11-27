@@ -1,0 +1,104 @@
+00:00 +0: loading C:/Users/dsyoy/mustory/apps/mobile/test/features/tracks/track_detail_page_test.dart
+00:00 +0 -1: loading C:/Users/dsyoy/mustory/apps/mobile/test/features/tracks/track_detail_page_test.dart [E]
+  Failed to load "C:/Users/dsyoy/mustory/apps/mobile/test/features/tracks/track_detail_page_test.dart":
+  Compilation failed for testPath=C:/Users/dsyoy/mustory/apps/mobile/test/features/tracks/track_detail_page_test.dart: lib/core/audio/audio_player_controller.dart:1:8: Error: Error when reading 'lib/analytics/analytics_service.dart': 指定されたパスが見つかりません。
+  
+  import '../../analytics/analytics_service.dart';
+         ^
+  lib/core/audio/audio_player_controller.dart:5:51: Error: Type 'AudioPlayerState' not found.
+  class AudioPlayerController extends StateNotifier<AudioPlayerState> {
+                                                    ^^^^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:5:37: Error: Type 'StateNotifier' not found.
+  class AudioPlayerController extends StateNotifier<AudioPlayerState> {
+                                      ^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:16:9: Error: Type 'TracksRepository' not found.
+    final TracksRepository _tracksRepository;
+          ^^^^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:17:9: Error: Type 'AnalyticsService' not found.
+    final AnalyticsService _analyticsService;
+          ^^^^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:18:3: Error: Type 'MustoryAudioHandler' not found.
+    MustoryAudioHandler? _audioHandler;
+    ^^^^^^^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:22:26: Error: Type 'Track' not found.
+    Future<void> playTrack(Track track) async {
+                           ^^^^^
+  lib/core/audio/audio_player_controller.dart:64:50: Error: 'AudioPlayerState' isn't a type.
+      StateNotifierProvider<AudioPlayerController, AudioPlayerState>((ref) {
+                                                   ^^^^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:66:38: Error: Undefined name 'tracksRepositoryProvider'.
+    final tracksRepository = ref.watch(tracksRepositoryProvider);
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:67:38: Error: Undefined name 'analyticsServiceProvider'.
+    final analyticsService = ref.watch(analyticsServiceProvider);
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:64:5: Error: Method not found: 'StateNotifierProvider'.
+      StateNotifierProvider<AudioPlayerController, AudioPlayerState>((ref) {
+      ^^^^^^^^^^^^^^^^^^^^^
+  test/features/tracks/track_detail_page_test.dart:106:13: Error: The getter 'state' isn't defined for the type '_FakeAudioPlayerController'.
+   - '_FakeAudioPlayerController' is from 'test/features/tracks/track_detail_page_test.dart'.
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'state'.
+      state = state.copyWith(
+              ^^^^^
+  test/features/tracks/track_detail_page_test.dart:106:5: Error: The setter 'state' isn't defined for the type '_FakeAudioPlayerController'.
+   - '_FakeAudioPlayerController' is from 'test/features/tracks/track_detail_page_test.dart'.
+  Try correcting the name to the name of an existing setter, or defining a setter or field named 'state'.
+      state = state.copyWith(
+      ^^^^^
+  lib/core/audio/audio_player_controller.dart:10:20: Error: Couldn't find constructor 'AudioPlayerState'.
+    }) : super(const AudioPlayerState()) {
+                     ^^^^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:12:7: Error: The method '_init' isn't defined for the type 'AudioPlayerController'.
+   - 'AudioPlayerController' is from 'package:mustory_mobile/core/audio/audio_player_controller.dart' ('lib/core/audio/audio_player_controller.dart').
+  Try correcting the name to the name of an existing method, or defining a method named '_init'.
+        _init();
+        ^^^^^
+  lib/core/audio/audio_player_controller.dart:16:9: Error: 'TracksRepository' isn't a type.
+    final TracksRepository _tracksRepository;
+          ^^^^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:17:9: Error: 'AnalyticsService' isn't a type.
+    final AnalyticsService _analyticsService;
+          ^^^^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:18:3: Error: 'MustoryAudioHandler' isn't a type.
+    MustoryAudioHandler? _audioHandler;
+    ^^^^^^^^^^^^^^^^^^^
+  lib/core/audio/audio_player_controller.dart:22:26: Error: 'Track' isn't a type.
+    Future<void> playTrack(Track track) async {
+                           ^^^^^
+  lib/core/audio/audio_player_controller.dart:28:15: Error: The getter 'state' isn't defined for the type 'AudioPlayerController'.
+   - 'AudioPlayerController' is from 'package:mustory_mobile/core/audio/audio_player_controller.dart' ('lib/core/audio/audio_player_controller.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'state'.
+        state = state.copyWith(isLoading: true);
+                ^^^^^
+  lib/core/audio/audio_player_controller.dart:28:7: Error: The setter 'state' isn't defined for the type 'AudioPlayerController'.
+   - 'AudioPlayerController' is from 'package:mustory_mobile/core/audio/audio_player_controller.dart' ('lib/core/audio/audio_player_controller.dart').
+  Try correcting the name to the name of an existing setter, or defining a setter or field named 'state'.
+        state = state.copyWith(isLoading: true);
+        ^^^^^
+  lib/core/audio/audio_player_controller.dart:31:11: Error: The getter 'state' isn't defined for the type 'AudioPlayerController'.
+   - 'AudioPlayerController' is from 'package:mustory_mobile/core/audio/audio_player_controller.dart' ('lib/core/audio/audio_player_controller.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'state'.
+        if (state.currentTrack?.id == track.id &&
+            ^^^^^
+  lib/core/audio/audio_player_controller.dart:38:15: Error: The getter 'state' isn't defined for the type 'AudioPlayerController'.
+   - 'AudioPlayerController' is from 'package:mustory_mobile/core/audio/audio_player_controller.dart' ('lib/core/audio/audio_player_controller.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'state'.
+        state = state.copyWith(currentTrack: track);
+                ^^^^^
+  lib/core/audio/audio_player_controller.dart:38:7: Error: The setter 'state' isn't defined for the type 'AudioPlayerController'.
+   - 'AudioPlayerController' is from 'package:mustory_mobile/core/audio/audio_player_controller.dart' ('lib/core/audio/audio_player_controller.dart').
+  Try correcting the name to the name of an existing setter, or defining a setter or field named 'state'.
+        state = state.copyWith(currentTrack: track);
+        ^^^^^
+  lib/core/audio/audio_player_controller.dart:54:15: Error: The getter 'state' isn't defined for the type 'AudioPlayerController'.
+   - 'AudioPlayerController' is from 'package:mustory_mobile/core/audio/audio_player_controller.dart' ('lib/core/audio/audio_player_controller.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'state'.
+        state = state.copyWith(isLoading: false);
+                ^^^^^
+  lib/core/audio/audio_player_controller.dart:54:7: Error: The setter 'state' isn't defined for the type 'AudioPlayerController'.
+   - 'AudioPlayerController' is from 'package:mustory_mobile/core/audio/audio_player_controller.dart' ('lib/core/audio/audio_player_controller.dart').
+  Try correcting the name to the name of an existing setter, or defining a setter or field named 'state'.
+        state = state.copyWith(isLoading: false);
+        ^^^^^
+  .
+00:00 +0 -1: Some tests failed.
