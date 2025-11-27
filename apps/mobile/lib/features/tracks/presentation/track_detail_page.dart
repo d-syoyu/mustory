@@ -75,18 +75,11 @@ class TrackDetailPage extends HookConsumerWidget {
     final hasStory = track.story != null;
     final isOwner = isAuthenticated && currentUserId == track.userId;
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          context.go('/');
-        }
-      },
-      child: Scaffold(
+    return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(Icons.keyboard_arrow_down),
-            onPressed: () => context.go('/'),
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
           ),
           title: const Text(''),
           backgroundColor: Colors.transparent,
@@ -162,7 +155,6 @@ class TrackDetailPage extends HookConsumerWidget {
             ),
           ],
         ),
-      ),
     );
   }
 

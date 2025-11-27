@@ -17,6 +17,10 @@ class FollowingPage extends HookConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
         title: const Text('フォロー中'),
       ),
       body: followingState.isLoading && followingState.users.isEmpty

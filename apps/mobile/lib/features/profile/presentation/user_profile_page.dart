@@ -32,14 +32,26 @@ class UserProfilePage extends HookConsumerWidget {
 
     if (profileState.isLoading && profile == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('プロフィール')),
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+          ),
+          title: const Text('プロフィール'),
+        ),
         body: const ProfileSkeleton(),
       );
     }
 
     if (profileState.error != null && profile == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('プロフィール')),
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+          ),
+          title: const Text('プロフィール'),
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -62,6 +74,10 @@ class UserProfilePage extends HookConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
         title: const Text('プロフィール'),
       ),
       body: RefreshIndicator(

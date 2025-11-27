@@ -23,7 +23,7 @@ class MyTracksPage extends HookConsumerWidget {
         title: const Text('マイトラック'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/profile'),
+          onPressed: () => context.pop(),
         ),
       ),
       body: Column(

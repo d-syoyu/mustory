@@ -20,7 +20,7 @@ class LikedTracksPage extends HookConsumerWidget {
         title: const Text('いいねした曲'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/profile'),
+          onPressed: () => context.pop(),
         ),
       ),
       body: Column(

@@ -20,7 +20,7 @@ class LikedPage extends HookConsumerWidget {
           title: const Text('いいね'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/profile'),
+            onPressed: () => context.pop(),
           ),
           bottom: const TabBar(
             tabs: [
