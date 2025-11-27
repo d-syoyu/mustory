@@ -39,7 +39,8 @@
       "Bash(tree:*)",
       "WebSearch",
       "Bash(dir:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(cmd //c \"del \\?\\C:\\Users\\dsyoy\\mustory\\nul\")"
     ],
     "deny": [],
     "ask": []
