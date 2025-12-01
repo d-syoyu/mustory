@@ -216,22 +216,26 @@ class LikeComment(Base):
     )
 
 
-class Follow(Base):
-    __tablename__ = "follows"
+class RecommendedTrack(Base):
+    __tablename__ = "recommended_tracks"
     __table_args__ = (
-        UniqueConstraint("follower_id", "followee_id", name="unique_follow"),
+        UniqueConstraint("user_id", "track_id", name="unique_user_track_recommendation"),
     )
 
-    follower_id: Mapped[uuid.UUID] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
-        primary_key=True,
+        nullable=False,
     )
-    followee_id: Mapped[uuid.UUID] = mapped_column(
+    track_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="CASCADE"),
-        primary_key=True,
+        ForeignKey("tracks.id", ondelete="CASCADE"),
+        nullable=False,
     )
+    score: Mapped[float] = mapped_column(Float, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow
     )

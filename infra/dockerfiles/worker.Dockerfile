@@ -15,8 +15,12 @@ COPY apps/api/pyproject.toml ./apps/api/
 COPY apps/api/README.md ./apps/api/
 COPY apps/api/app ./apps/api/app
 
-# Install Python dependencies
-RUN pip install --upgrade pip && pip install -e ./apps/api
+# Copy worker app files
+COPY apps/worker/pyproject.toml ./apps/worker/
+COPY apps/worker/src ./apps/worker/src
 
-# Run RQ worker for track processing
-CMD ["sh", "-c", "rq worker track_processing --url ${REDIS_URL:-redis://redis:6379/0}"]
+# Install Python dependencies
+RUN pip install --upgrade pip && pip install -e ./apps/api && pip install -e ./apps/worker
+
+# Run worker using Python module (avoids RQ CLI duplicate parameter warnings)
+CMD ["python", "-m", "mustory_worker.main"]

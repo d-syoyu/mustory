@@ -30,11 +30,36 @@ from app.core.config import get_settings  # noqa: E402
 QUEUE_NAME = "track_processing"
 
 
+def _mask_redis_url(url: str) -> str:
+    """Mask password in Redis URL for safe logging."""
+    from urllib.parse import urlparse, urlunparse
+    parsed = urlparse(url)
+    if parsed.password:
+        masked = parsed._replace(
+            netloc=f"{parsed.username or ''}:****@{parsed.hostname}:{parsed.port or 6379}"
+        )
+        return urlunparse(masked)
+    return url
+
+
 def _create_redis_connection() -> redis.Redis:
     settings = get_settings()
     redis_url = settings.redis_url
-    logger.info("Connecting to Redis at %s", redis_url)
-    return redis.from_url(redis_url)
+    masked_url = _mask_redis_url(redis_url)
+    logger.info("Connecting to Redis at %s", masked_url)
+
+    # Test connection before returning
+    conn = redis.from_url(redis_url)
+    try:
+        conn.ping()
+        logger.info("Redis connection successful")
+    except redis.AuthenticationError as e:
+        logger.error("Redis authentication failed. Check REDIS_URL has correct password.")
+        raise
+    except redis.ConnectionError as e:
+        logger.error("Failed to connect to Redis: %s", e)
+        raise
+    return conn
 
 
 def main() -> None:

@@ -20,5 +20,5 @@ COPY apps/api/app ./apps/api/app
 # Install Python dependencies
 RUN pip install --upgrade pip && pip install -e ./apps/api
 
-# Run RQ worker
-CMD ["sh", "-c", "rq worker track_processing --url ${REDIS_URL:-redis://redis:6379/0}"]
+# Run RQ worker using Python (avoids CLI duplicate parameter warnings)
+CMD ["python", "-c", "from rq import Worker; from redis import from_url; import os; Worker(['track_processing'], connection=from_url(os.getenv('REDIS_URL', 'redis://redis:6379/0'))).work()"]

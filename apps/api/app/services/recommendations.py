@@ -32,6 +32,9 @@ class UserPreferenceProfile:
     preferred_creator_scores: dict[UUID, float]
     interacted_track_ids: set[UUID]
     story_affinity: float
+    target_bpm: float | None = None
+    target_energy: float | None = None
+    target_valence: float | None = None
 
     def top_creator_ids(self, limit: int = 5) -> list[UUID]:
         return [
@@ -53,10 +56,45 @@ class RecommendationService:
     - Blend in personal affinity when we know the listener's preferred creators/stories.
     - Encourage story consumption by boosting tracks with active stories when the user shows interest.
     - Avoid repeating the same creator too many times in a short list.
+    - Boost tracks that match the user's preferred audio profile (BPM, Energy, Valence).
     """
 
     def __init__(self, db: Session):
         self.db = db
+
+    def refresh_recommendations_for_user(self, user_id: UUID, limit: int = 20) -> None:
+        """
+        Calculate recommendations for a user and store them in the database.
+        This method is intended to be run by a background worker.
+        """
+        recommended_tracks = self.recommend_tracks(user_id=user_id, limit=limit)
+
+        # Clear existing recommendations for this user
+        self.db.execute(
+            models.RecommendedTrack.__table__.delete().where(
+                models.RecommendedTrack.user_id == user_id
+            )
+        )
+
+        # Insert new recommendations
+        if recommended_tracks:
+            # Since we don't have exact scores from recommend_tracks (it returns tracks),
+            # we'll assign scores based on rank to preserve order.
+            values = []
+            for i, track in enumerate(recommended_tracks):
+                # Score decreases with rank: 1.0, 0.95, 0.90, ...
+                score = max(1.0 - (i * 0.01), 0.1)
+                values.append(
+                    {
+                        "user_id": user_id,
+                        "track_id": track.id,
+                        "score": score,
+                    }
+                )
+            
+            self.db.execute(models.RecommendedTrack.__table__.insert(), values)
+        
+        self.db.commit()
 
     def recommend_tracks(self, *, user_id: UUID | None, limit: int = 20) -> list[models.Track]:
         """Return ranked track candidates honoring hybrid scoring."""
@@ -76,10 +114,10 @@ class RecommendationService:
     def _build_user_profile(self, user_id: UUID) -> UserPreferenceProfile | None:
         """Aggregate interactions (likes/comments) to build a lightweight preference profile."""
         liked_tracks = self.db.execute(
-            select(models.Track.id, models.Track.user_id)
+            select(models.Track)
             .join(models.LikeTrack, models.LikeTrack.track_id == models.Track.id)
             .where(models.LikeTrack.user_id == user_id)
-        ).all()
+        ).scalars().all()
 
         track_comment_rows = self.db.execute(
             select(models.Track.id, models.Track.user_id)
@@ -114,10 +152,23 @@ class RecommendationService:
 
         creator_scores: dict[UUID, float] = defaultdict(float)
         interacted_track_ids: set[UUID] = set()
+        
+        # Audio feature accumulators
+        total_bpm = 0.0
+        total_energy = 0.0
+        total_valence = 0.0
+        audio_count = 0
 
-        for row in liked_tracks:
-            creator_scores[row.user_id] += 3.0
-            interacted_track_ids.add(row.id)
+        for track in liked_tracks:
+            creator_scores[track.user_id] += 3.0
+            interacted_track_ids.add(track.id)
+            
+            # Collect audio features from liked tracks
+            if track.bpm is not None and track.mood_energy is not None and track.mood_valence is not None:
+                total_bpm += track.bpm
+                total_energy += track.mood_energy
+                total_valence += track.mood_valence
+                audio_count += 1
 
         for row in track_comment_rows:
             creator_scores[row.user_id] += 1.5
@@ -151,6 +202,9 @@ class RecommendationService:
             preferred_creator_scores=normalized_scores,
             interacted_track_ids=interacted_track_ids,
             story_affinity=story_affinity,
+            target_bpm=total_bpm / audio_count if audio_count > 0 else None,
+            target_energy=total_energy / audio_count if audio_count > 0 else None,
+            target_valence=total_valence / audio_count if audio_count > 0 else None,
         )
 
     def _load_candidate_tracks(
@@ -274,6 +328,23 @@ class RecommendationService:
                 score *= 1 + 0.2 * profile.story_affinity
             if track.id in profile.interacted_track_ids:
                 score *= 0.35
+            
+            # Audio Feature Matching
+            if (
+                profile.target_energy is not None 
+                and track.mood_energy is not None 
+                and track.mood_valence is not None
+            ):
+                # Simple Euclidean distance similarity for Energy and Valence (0-1 range)
+                energy_diff = abs(profile.target_energy - track.mood_energy)
+                valence_diff = abs((profile.target_valence or 0.5) - track.mood_valence)
+                
+                # Similarity score: 1.0 is perfect match, lower is worse.
+                # We weight energy slightly higher.
+                audio_similarity = 1.0 - (energy_diff * 0.6 + valence_diff * 0.4)
+                
+                # Boost score by up to 50% for high similarity
+                score *= (1.0 + audio_similarity * 0.5)
 
         return score
 
