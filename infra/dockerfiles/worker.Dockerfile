@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
 # Install FFmpeg and system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
@@ -19,4 +19,4 @@ COPY apps/api/app ./apps/api/app
 RUN pip install --upgrade pip && pip install -e ./apps/api
 
 # Run RQ worker for track processing
-CMD ["rq", "worker", "track_processing", "--url", "redis://redis:6379/0"]
+CMD ["sh", "-c", "rq worker track_processing --url ${REDIS_URL:-redis://redis:6379/0}"]
